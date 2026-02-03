@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4cae4f",
+                        "background-light": "#f6f7f6",
+                        "background-dark": "#151d15",
+                    },
+                    fontFamily: {
+                        "display": ["Epilogue"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-morphism {
+            background: rgba(32, 44, 33, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .scan-frame {
+            border: 2px solid rgba(76, 174, 79, 0.5);
+            box-shadow: 0 0 20px rgba(76, 174, 79, 0.2);
+        }
+        .scan-line {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #4cae4f, transparent);
+            top: 50%;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-white overflow-hidden h-screen">
+<div class="relative flex h-screen w-full flex-col overflow-hidden">
+<!-- Full-screen Camera View Placeholder -->
+<div class="absolute inset-0 z-0 bg-cover bg-center" data-alt="POV of a camera scanning an oat milk carton on a kitchen counter" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDMCA7ZYpwvmI3sBOgthuzzkGfHdBanzz-j7X8YDpnlUc1BKWmZAG5liMF5UEG35xOZ9fiPP4X6yE77NBM_uHXY0YkqmKTLpnrjE1NByd-HH00WM2M2QnILR2_5-amLfDKvlXj51M2jdZiEGrVCikVjUUd2YvlzfdPa7QTzNoN5SXhx7lUZLtFGQnc2hDr_8joCroV98TsUCQHw-ky68NFl6rDkBGfJvKOOLPHLnhCacDrG-6yPJTNVjySLCgfjuxZbpAT_D845sGY');">
+<div class="absolute inset-0 bg-black/30"></div>
+</div>
+<!-- Top Navigation -->
+<div class="relative z-10 flex items-center p-4 pt-12 justify-between">
+<div class="flex size-12 items-center justify-center rounded-full bg-black/20 backdrop-blur-md">
+<span class="material-symbols-outlined text-white">flash_on</span>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-tight drop-shadow-md">NutriScan</h2>
+<div class="flex size-12 items-center justify-center rounded-full bg-black/20 backdrop-blur-md">
+<span class="material-symbols-outlined text-white">settings</span>
+</div>
+</div>
+<!-- Scanning Frame Overlay -->
+<div class="relative z-10 flex-1 flex items-center justify-center p-8">
+<div class="relative w-full aspect-square max-w-xs rounded-3xl scan-frame flex flex-col items-center justify-center">
+<!-- Corner Accents -->
+<div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-xl"></div>
+<div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-xl"></div>
+<div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-xl"></div>
+<div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-xl"></div>
+<div class="absolute w-full scan-line"></div>
+<p class="text-white/60 text-xs font-medium uppercase tracking-widest mt-auto mb-6">Align label within frame</p>
+</div>
+</div>
+<!-- Content Overlay / Real-time Detection Card -->
+<div class="relative z-10 px-4 pb-4">
+<div class="glass-morphism rounded-xl p-4 flex items-center gap-4">
+<div class="flex flex-1 flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+<p class="text-white text-base font-bold leading-tight">Scanning: Oat Milk...</p>
+</div>
+<p class="text-white/70 text-sm font-normal leading-normal">Analyzing ingredients &amp; nutritional value</p>
+</div>
+<div class="size-16 rounded-lg overflow-hidden shrink-0 border border-white/10">
+<div class="w-full h-full bg-cover bg-center" data-alt="Close up of nutritional label of oat milk" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBANXknyd4u3R7ZqnBrhltYMLVc8zwLLMqh-FrK8syrh9IvK1oI8m5ZZRcrb-YaWTDHkViFsPF6pX7cuQf6YMOfHznNUWzhMTPuS7eFjx6jg10bNa2a10oI3kotqgYSnqCKHXSi6mNmZWLx3jl4xjV6vD1TQe8cd-6AK24FgHjRD3LtSoXbjaXkes7Dc4vUw7geTrV5PkN_srXu3kMnH08uErIm-bWV_sc0N20Nl55VW1Tuh01-zB631CtsgqJwW7QHm5vy5qHIzSc');"></div>
+</div>
+</div>
+</div>
+<!-- Camera Controls -->
+<div class="relative z-10 flex items-center justify-center gap-8 p-6 pb-2">
+<button class="flex shrink-0 items-center justify-center rounded-full size-12 bg-black/40 text-white backdrop-blur-md">
+<span class="material-symbols-outlined">image</span>
+</button>
+<div class="relative">
+<!-- Glow Effect -->
+<div class="absolute inset-0 bg-gradient-to-tr from-primary to-blue-400 rounded-full blur-lg opacity-50"></div>
+<button class="relative flex shrink-0 items-center justify-center rounded-full size-20 bg-gradient-to-tr from-primary to-blue-500 text-white border-4 border-white/20 shadow-2xl">
+<span class="material-symbols-outlined !text-4xl" style="font-variation-settings: 'FILL' 1">shutter_speed</span>
+</button>
+</div>
+<button class="flex shrink-0 items-center justify-center rounded-full size-12 bg-black/40 text-white backdrop-blur-md">
+<span class="material-symbols-outlined">history</span>
+</button>
+</div>
+<!-- Bottom Navigation Bar -->
+<div class="relative z-10 flex gap-2 border-t border-white/10 bg-black/40 backdrop-blur-xl px-4 pb-8 pt-3">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/50" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium uppercase tracking-tighter">Feed</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/50" href="#">
+<span class="material-symbols-outlined">search</span>
+<p class="text-[10px] font-medium uppercase tracking-tighter">Discover</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined !fill-1">photo_camera</span>
+<p class="text-[10px] font-bold uppercase tracking-tighter">Scan</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/50" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<p class="text-[10px] font-medium uppercase tracking-tighter">Stats</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-white/50" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<p class="text-[10px] font-medium uppercase tracking-tighter">Profile</p>
+</a>
+</div>
+</div>
+</body></html>

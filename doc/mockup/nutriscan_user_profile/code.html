@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NutriScan User Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec1a",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102211",
+                    },
+                    fontFamily: {
+                        "display": ["Epilogue"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .dark .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#0d1b0e] dark:text-white min-h-screen">
+<div class="relative flex h-full min-h-screen w-full flex-col group/design-root overflow-x-hidden max-w-[430px] mx-auto bg-background-light dark:bg-background-dark shadow-2xl">
+<!-- TopAppBar -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10">
+<div class="text-[#0d1b0e] dark:text-white flex size-12 shrink-0 items-center">
+<span class="material-symbols-outlined">arrow_back_ios</span>
+</div>
+<h2 class="text-[#0d1b0e] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Profile</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 bg-transparent text-[#0d1b0e] dark:text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] min-w-0 p-0">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+<!-- ProfileHeader -->
+<div class="flex p-4 @container">
+<div class="flex w-full flex-col gap-4 items-center">
+<div class="flex gap-4 flex-col items-center">
+<div class="p-1 rounded-full bg-gradient-to-tr from-primary to-green-300">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full min-h-32 w-32 border-4 border-background-light dark:border-background-dark" data-alt="User profile picture of Alex Johnson" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAReDPie06rB0BxBEosz1OPSaS6010eWvVuMmOPtHN88RIWAAvBVu3rHLALh2SL8VsCb_7TdrxyObK0NuCxeNropTuWCL-RFXaInsK2Rj95FoWgfGJe2QOJkiN0x9z3zhn9SsxQ3PbMr0A4pIClYApPqtmuVibOli0VpLnaxfYi8v-x4Oy5cH1kwM651JewiWtN0iuKPjWbrIQ9-OlO9EBgiTGgWFUpLDMTaL6itUofDMA_QABSaZkH0AS6PXkxHYZCT_Co-Bh277c");'>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center">
+<p class="text-[#0d1b0e] dark:text-white text-[24px] font-bold leading-tight tracking-[-0.015em] text-center">Alex Johnson</p>
+<div class="mt-1 px-3 py-1 bg-primary/20 rounded-full">
+<p class="text-green-700 dark:text-primary text-sm font-bold leading-normal text-center flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">verified</span> Premium Member
+                            </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ProfileStats (Glassmorphic) -->
+<div class="flex flex-wrap gap-3 px-4 py-3">
+<div class="flex min-w-[100px] flex-1 basis-[fit-content] flex-col gap-1 rounded-xl glass p-4 items-center text-center shadow-sm">
+<p class="text-[#0d1b0e] dark:text-white tracking-light text-2xl font-bold leading-tight">124</p>
+<div class="flex items-center gap-2">
+<p class="text-gray-500 dark:text-gray-400 text-xs font-medium leading-normal uppercase tracking-wider">Total Scans</p>
+</div>
+</div>
+<div class="flex min-w-[100px] flex-1 basis-[fit-content] flex-col gap-1 rounded-xl glass p-4 items-center text-center shadow-sm">
+<p class="text-[#0d1b0e] dark:text-white tracking-light text-2xl font-bold leading-tight">18</p>
+<div class="flex items-center gap-2">
+<p class="text-gray-500 dark:text-gray-400 text-xs font-medium leading-normal uppercase tracking-wider">Favorites</p>
+</div>
+</div>
+<div class="flex min-w-[100px] flex-1 basis-[fit-content] flex-col gap-1 rounded-xl glass p-4 items-center text-center shadow-sm">
+<p class="text-[#0d1b0e] dark:text-white tracking-light text-2xl font-bold leading-tight">12</p>
+<div class="flex items-center gap-2">
+<p class="text-gray-500 dark:text-gray-400 text-xs font-medium leading-normal uppercase tracking-wider">Streak Days</p>
+</div>
+</div>
+</div>
+<!-- SectionHeader -->
+<h3 class="text-[#0d1b0e] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-6">Favorites Preview</h3>
+<!-- Carousel -->
+<div class="flex overflow-y-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden">
+<div class="flex items-stretch p-4 gap-4">
+<div class="flex h-full flex-1 flex-col gap-2 rounded-lg min-w-40">
+<div class="w-full bg-center bg-no-repeat aspect-[4/5] bg-cover rounded-xl flex flex-col shadow-md" data-alt="A fresh avocado toast with chili flakes" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuApjPZG05N-luUn77n-m3NCFL751jRNQIUVE2izofybCHE9Bs67KzTocj3jNrJRZGsuiXKSSjd-InptzBvfe9ybkn2OXkZLgvL9-TLqVF3ZZBFFRl-_bXR_7V72FSzykCquhNc4c32BzB5XU-ubHO2mlowbJtntYrJjr7NAeScOjSVabXkIvIopEpjrt4_KjOUyKim5SJIHYXbBj-S-otulV5t76sEUPlmfz4T7dyh8axFbsDIojvybrR-ubJEyz8y2BSLqI8HqJ3U");'>
+</div>
+<div class="px-1">
+<p class="text-[#0d1b0e] dark:text-white text-sm font-bold leading-normal">Avocado toast</p>
+<p class="text-primary text-xs font-medium leading-normal">Healthy • 92% Score</p>
+</div>
+</div>
+<div class="flex h-full flex-1 flex-col gap-2 rounded-lg min-w-40">
+<div class="w-full bg-center bg-no-repeat aspect-[4/5] bg-cover rounded-xl flex flex-col shadow-md" data-alt="Colorful poke bowl with salmon and vegetables" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDG2PjdXV2a0JKWjjiCXP5RFPr-6FolyyoIuwWLRDQF9lX8vNhCUugh-ya5eJEJG2pFDcE3wggaH1acEqBJUTfqlbIZgfYDxt86He3pmRfpCx_Fb3DwrwYdFLjOruQUHMoBOwPMjZbG_kdn-X_mgo6Jw5D12JMsJPIjVhuqeQjP6Q47DHLUJtIujHSvnVUvWDTNrJE736_XvnBdBjkbj0O8zJYu9N6YvcT5ByB3dCw9NoxtepiKtwj-HOGLl29M3BB9JsIQgeMUnMU");'>
+</div>
+<div class="px-1">
+<p class="text-[#0d1b0e] dark:text-white text-sm font-bold leading-normal">Salmon Poke</p>
+<p class="text-primary text-xs font-medium leading-normal">Fresh • 88% Score</p>
+</div>
+</div>
+<div class="flex h-full flex-1 flex-col gap-2 rounded-lg min-w-40">
+<div class="w-full bg-center bg-no-repeat aspect-[4/5] bg-cover rounded-xl flex flex-col shadow-md" data-alt="Vibrant green spinach and apple smoothie" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDb4MfxydwyQ1cMldmbkZzxnDOfy2OChdiOxgMaZEguiMa7Ur9Dd2gEhyb7OYQsdhdIKprAGaLZjJsVckyRssZK6qunU9u8vgqVb8HLXQ-Rw87hIjFNEg9cmIdWfUkUgGm2uuZs9KINZNxa7KlOi57avXKanKz8eqD_CCnLwr78vjWplVRk6wwkwAGsyNDiuoWTsd4yw_iYks8xycgxGyzAqbkBtVamfW3DH6GFs7WrHm3jxNBKnknhzykmpqTwbkjVNlO2gEBS4wQ");'>
+</div>
+<div class="px-1">
+<p class="text-[#0d1b0e] dark:text-white text-sm font-bold leading-normal">Green Power</p>
+<p class="text-primary text-xs font-medium leading-normal">Detox • 95% Score</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Settings List -->
+<div class="flex flex-col px-4 gap-3 py-4">
+<div class="flex items-center justify-between p-4 bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+<span class="material-symbols-outlined">person</span>
+</div>
+<span class="font-bold text-[#0d1b0e] dark:text-white">Account Settings</span>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400">
+<span class="material-symbols-outlined">restaurant</span>
+</div>
+<span class="font-bold text-[#0d1b0e] dark:text-white">Dietary Preferences</span>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-white dark:bg-white/5 rounded-xl border border-gray-100 dark:border-white/10 shadow-sm cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
+<span class="material-symbols-outlined">notifications</span>
+</div>
+<span class="font-bold text-[#0d1b0e] dark:text-white">Notifications</span>
+</div>
+<span class="material-symbols-outlined text-gray-400">chevron_right</span>
+</div>
+</div>
+<!-- Logout Button -->
+<div class="px-4 pt-4 pb-24">
+<button class="w-full flex items-center justify-center gap-2 py-4 bg-red-50 dark:bg-red-950/20 text-red-600 font-bold rounded-xl border border-red-100 dark:border-red-900/30">
+<span class="material-symbols-outlined">logout</span>
+                Logout
+            </button>
+</div>
+<!-- Navigation Bar -->
+<div class="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto bg-white/80 dark:bg-background-dark/80 backdrop-blur-lg border-t border-gray-100 dark:border-white/10 px-6 py-3 flex justify-between items-center z-20">
+<div class="flex flex-col items-center gap-1 text-gray-400">
+<span class="material-symbols-outlined">home</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-gray-400">
+<span class="material-symbols-outlined">search</span>
+</div>
+<div class="flex flex-col items-center gap-1">
+<div class="bg-primary size-12 rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/30 -mt-8 border-4 border-background-light dark:border-background-dark">
+<span class="material-symbols-outlined">barcode_scanner</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1 text-gray-400">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-primary relative">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">person</span>
+<div class="absolute -bottom-1 w-1 h-1 rounded-full bg-primary"></div>
+</div>
+</div>
+</div>
+</body></html>

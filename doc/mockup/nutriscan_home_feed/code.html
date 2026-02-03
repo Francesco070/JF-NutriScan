@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NutriScan Home Feed</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4cae4f",
+                        "background-light": "#f6f7f6",
+                        "background-dark": "#151d15",
+                    },
+                    fontFamily: {
+                        "display": ["Epilogue"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Epilogue', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center p-4 justify-between max-w-md mx-auto">
+<div class="flex items-center gap-2">
+<div class="bg-primary p-1.5 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-2xl">qr_code_scanner</span>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-tight">NutriScan</h2>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center rounded-full h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1 max-w-md mx-auto w-full pb-24">
+<!-- Welcome Section -->
+<div class="px-4 pt-6 pb-2">
+<h1 class="text-2xl font-bold">Hi, Sarah 👋</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm">Keep up the great habits!</p>
+</div>
+<!-- Stats Section -->
+<div class="flex gap-4 p-4">
+<div class="flex min-w-[140px] flex-1 flex-col gap-2 rounded-xl p-5 bg-white dark:bg-[#2d3e2e] shadow-sm border border-slate-100 dark:border-transparent">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-xl">history</span>
+<p class="text-sm font-medium">Scanned Today</p>
+</div>
+<p class="text-2xl font-bold leading-tight">3 items</p>
+</div>
+<div class="flex min-w-[140px] flex-1 flex-col gap-2 rounded-xl p-5 bg-white dark:bg-[#2d3e2e] shadow-sm border border-slate-100 dark:border-transparent">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-xl">favorite</span>
+<p class="text-sm font-medium">Health Score</p>
+</div>
+<div class="flex items-baseline gap-1">
+<p class="text-2xl font-bold leading-tight">85</p>
+<p class="text-sm text-slate-500 dark:text-slate-400">/100</p>
+</div>
+</div>
+</div>
+<!-- Progress Overview -->
+<div class="px-4 py-2">
+<div class="bg-white dark:bg-slate-800/50 rounded-xl p-5 border border-slate-100 dark:border-slate-800">
+<div class="flex flex-col gap-3">
+<div class="flex gap-6 justify-between items-center">
+<p class="text-base font-semibold">Weekly Goal Progress</p>
+<span class="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-xs font-bold">Excellent</span>
+</div>
+<div class="rounded-full bg-slate-200 dark:bg-slate-700 h-3 overflow-hidden">
+<div class="h-full rounded-full bg-primary" style="width: 85%;"></div>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-xs">You are consuming 15% less processed sugar than last week.</p>
+</div>
+</div>
+</div>
+<!-- SectionHeader -->
+<div class="flex items-center justify-between px-4 pt-6 pb-2">
+<h3 class="text-lg font-bold leading-tight tracking-tight">Recent Scans</h3>
+<button class="text-primary text-sm font-semibold">See All</button>
+</div>
+<!-- Carousel -->
+<div class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4">
+<div class="flex items-stretch px-4 gap-4">
+<!-- Card 1 -->
+<div class="flex h-full flex-col gap-3 rounded-xl min-w-[200px] snap-start">
+<div class="relative w-full aspect-[4/5] bg-center bg-no-repeat bg-cover rounded-xl shadow-md border border-slate-100 dark:border-slate-800 overflow-hidden" data-alt="Container of plain greek yogurt on wooden table" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAzUD5U2sYSpgu2PaDEdfzRcDfWWbrRwJDlr2L49kbM6U30efoFwTcDOYGQOgMaYU40vhf9m0L1wfchonyMXqNAz3PdevCwpBbtXnn0pXR_LUcP3AovNIt6-PMhvxhYCs0GYUZnty4sYuatUSlXkCLjgtwb5UJlrX5nPfvp6-x4p7E4Sj_dusycyrpwFT0pUedXw-ENr9AbGDhtxO7CAORILnzV8rRb1L-7uG7DTj5hEGE0WgPrnjuRgMkphpo1gJtFGj0Dbd1umso");'>
+<div class="absolute top-3 right-3 bg-white/90 dark:bg-black/70 backdrop-blur px-2 py-1 rounded-lg">
+<span class="text-green-600 dark:text-green-400 font-bold text-lg">A</span>
+</div>
+</div>
+<div class="px-1">
+<p class="font-bold text-sm">Greek Yogurt</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">Chobani • 150 kcal</p>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="flex h-full flex-col gap-3 rounded-xl min-w-[200px] snap-start">
+<div class="relative w-full aspect-[4/5] bg-center bg-no-repeat bg-cover rounded-xl shadow-md border border-slate-100 dark:border-slate-800 overflow-hidden" data-alt="Bottle of fresh almond milk on white background" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAuSPIAEF_ZFgMY-M0SQ7fyKDtV7CbiWGzzxvZVYLy4xCK_4M5YO5NqXSanskN8fVLeNgo1eC1FwkIRPL-QHVTxpWodKjRrYfEKmhenCVfwoIXcemcu0lyeQ3d_yeJADEP5pFAIiBmJdxuwECZtTE8AunGIXOqIoUmHkE5uo_0eFT_w5LguWIWVg8tfRjU0jFXRDcrzNlpk6so95fYsgXnlVEqWNxujsQI4-CKOSdC6Sjwtq7ywTz-rIoGwrg3xgSvkwSpLKlhVll0");'>
+<div class="absolute top-3 right-3 bg-white/90 dark:bg-black/70 backdrop-blur px-2 py-1 rounded-lg">
+<span class="text-yellow-600 dark:text-yellow-400 font-bold text-lg">B</span>
+</div>
+</div>
+<div class="px-1">
+<p class="font-bold text-sm">Almond Milk</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">Silk • 30 kcal</p>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="flex h-full flex-col gap-3 rounded-xl min-w-[200px] snap-start">
+<div class="relative w-full aspect-[4/5] bg-center bg-no-repeat bg-cover rounded-xl shadow-md border border-slate-100 dark:border-slate-800 overflow-hidden" data-alt="Bowl of organic granola with fruits" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCMP1to1kQNNO2YWjooSHJj6v8tRX7fQz7-PaatJnsZMTJI220EG-OeDb0G58o4EXr9w9MXF0HSEgrz5WZ-ZBR79JMaerPBvpBK3YvJISvsvD34Ma7HOBCCHY5seh2a19JHsM6XzOsKp6JLoOxFbq8HxVfkskEF-TMniVWqEi_wFutMRpEMaT3HaBOZWaal_XTXsd7c1-HKFto7fnCJHxYl0BUJMnNLu-trQXr4LgtnEPZh4nlRW4US2_k5APtnoeCrn7pO7hJ_1sA");'>
+<div class="absolute top-3 right-3 bg-white/90 dark:bg-black/70 backdrop-blur px-2 py-1 rounded-lg">
+<span class="text-green-600 dark:text-green-400 font-bold text-lg">A</span>
+</div>
+</div>
+<div class="px-1">
+<p class="font-bold text-sm">Organic Granola</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">Nature's Path • 210 kcal</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Insights Section -->
+<div class="px-4 pt-4 pb-2">
+<h3 class="text-lg font-bold leading-tight tracking-tight mb-3">Daily Insight</h3>
+<div class="bg-primary/10 border border-primary/20 rounded-xl p-4 flex gap-4 items-start">
+<div class="bg-primary/20 p-2 rounded-lg text-primary">
+<span class="material-symbols-outlined">lightbulb</span>
+</div>
+<div>
+<p class="font-semibold text-sm">Better Alternatives Found</p>
+<p class="text-xs text-slate-600 dark:text-slate-300 mt-1">We found a brand of Almond Milk with 50% less sugar than your usual choice. Check it out!</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-background-dark/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 px-6 py-3">
+<div class="max-w-md mx-auto flex justify-between items-center">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-bold">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">search</span>
+<span class="text-[10px] font-medium">Explore</span>
+</button>
+<div class="relative -top-8">
+<button class="bg-primary w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/40 border-4 border-background-light dark:border-background-dark">
+<span class="material-symbols-outlined text-3xl">add_a_photo</span>
+</button>
+</div>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">bar_chart</span>
+<span class="text-[10px] font-medium">Stats</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</button>
+</div>
+</nav>
+</body></html>
