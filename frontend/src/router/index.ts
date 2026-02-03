@@ -1,37 +1,36 @@
-import { createRouter } from 'vue-router'
-import type { RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 
-const routes: RouteRecordRaw[] = [
+const routes = [
     {
         path: '/',
         name: 'Home',
-        component: () => import('@/views/Home.vue'),
+        component: () => import('../views/Home.vue'),
     },
     {
         path: '/scanner',
         name: 'Scanner',
-        component: () => import('@/views/Scanner.vue'),
+        component: () => import('../views/Scanner.vue'),
     },
     {
         path: '/product/:barcode',
         name: 'ProductDetail',
-        component: () => import('@/views/ProductDetail.vue'),
+        component: () => import('../views/ProductDetail.vue'),
         props: true,
     },
     {
         path: '/profile',
         name: 'Profile',
-        component: () => import('@/views/Profile.vue'),
+        component: () => import('../views/Profile.vue'),
     },
     {
         path: '/login',
         name: 'Login',
-        component: () => import('@/views/Login.vue'),
+        component: () => import('../views/Login.vue'),
     },
 ]
 
-// @ts-ignore
 const router = createRouter({
+    history: createWebHistory(),
     routes,
 })
 

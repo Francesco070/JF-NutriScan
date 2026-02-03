@@ -7,6 +7,10 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
   },
+  android: {
+    path: 'android',
+    // Für NixOS - Android Studio ist im PATH
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 0,
