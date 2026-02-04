@@ -15,7 +15,7 @@ export default defineConfig({
         short_name: 'NutriScan',
         description: 'Scan and track food products',
         theme_color: '#4CAF50',
-        background_color: '#ffffff',
+        background_color: '#000000',
         display: 'standalone',
       },
     }),
