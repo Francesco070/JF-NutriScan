@@ -5,12 +5,14 @@ export function useScanner() {
     const isScanning = ref(false)
     const scannedCode = ref<string | null>(null)
     const error = ref<string | null>(null)
+    const noProductFound = ref(false)
     let scanner: Html5Qrcode | null = null
 
     const startScan = async (elementId: string) => {
         try {
             isScanning.value = true
             error.value = null
+            noProductFound.value = false
 
             scanner = new Html5Qrcode(elementId)
 
@@ -22,19 +24,49 @@ export function useScanner() {
                     aspectRatio: 1.0,
                 },
                 (decodedText) => {
-                    console.log('Barcode detected:', decodedText)
+                    console.log('✅ QR/Barcode gefunden:', decodedText)
                     scannedCode.value = decodedText
+                    noProductFound.value = false
                     stopScan()
                 },
                 () => {
-                    // Scan errors are normal, ignore them
-                    // console.log('Scan error:', errorMessage)
+                    // Scan errors sind normal während dem Scannen
+                    // Nur loggen wenn länger als 5 Sekunden kein Code gefunden wurde
                 }
             )
         } catch (err: any) {
-            console.error('Scanner start failed:', err)
+            console.error('❌ Scanner Start fehlgeschlagen:', err)
             error.value = err.message || 'Failed to start scanner'
             isScanning.value = false
+        }
+    }
+
+    const scanFile = async (file: File): Promise<string | null> => {
+        try {
+            console.log('📷 Scanne hochgeladenes Bild:', file.name)
+
+            if (!scanner) {
+                scanner = new Html5Qrcode('qr-reader')
+            }
+
+            const result = await scanner.scanFile(file, true)
+
+            if (result) {
+                console.log('✅ QR/Barcode in Bild gefunden:', result)
+                scannedCode.value = result
+                noProductFound.value = false
+                return result
+            } else {
+                console.warn('⚠️ Kein QR/Barcode im Bild gefunden')
+                noProductFound.value = true
+                return null
+            }
+        } catch (err: any) {
+            console.error('❌ Fehler beim Scannen des Bildes:', err.message)
+            console.log('❌ No product found - Kein lesbarer Code im Bild')
+            noProductFound.value = true
+            error.value = 'No product found'
+            return null
         }
     }
 
@@ -55,7 +87,9 @@ export function useScanner() {
         isScanning,
         scannedCode,
         error,
+        noProductFound,
         startScan,
+        scanFile,
         stopScan,
     }
 }

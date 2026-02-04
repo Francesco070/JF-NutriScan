@@ -12,7 +12,7 @@
           <v-icon>{{ flashOn ? 'mdi-flash' : 'mdi-flash-off' }}</v-icon>
         </v-btn>
 
-        <h3 class="text-h6 font-weight-bold white--text">NutriScan</h3>
+        <h3 class="text-h6 font-weight-bold" style="color: white">NutriScan</h3>
 
         <v-btn
             icon
@@ -400,7 +400,7 @@ const getNutriScoreColor = (score: string) => {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -95%);
   width: 280px;
   height: 280px;
   pointer-events: none;
@@ -483,7 +483,7 @@ const getNutriScoreColor = (score: string) => {
 /* Product Preview - Between scan frame and buttons */
 .product-preview {
   position: absolute;
-  bottom: 200px;
+  bottom: 220px;
   left: 24px;
   right: 24px;
   cursor: pointer;
