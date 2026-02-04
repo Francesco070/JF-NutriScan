@@ -12,15 +12,33 @@ const routes = [
         component: () => import('../views/Scanner.vue'),
     },
     {
-        path: '/product/:barcode',
-        name: 'ProductDetail',
-        component: () => import('../views/ProductDetail.vue'),
-        props: true,
+        path: '/explore',
+        name: 'Explore',
+        component: () => import('../views/Explore.vue'),
+        children: [
+            {
+                path: 'product/:barcode',
+                name: 'ExploreProduct',
+                component: () => import('../views/ProductDetail.vue'),
+                props: true,
+            }
+        ]
+    },
+    {
+        path: '/stats',
+        name: 'Stats',
+        component: () => import('../views/Stats.vue'),
     },
     {
         path: '/profile',
         name: 'Profile',
         component: () => import('../views/Profile.vue'),
+    },
+    {
+        path: '/product/:barcode',
+        name: 'ProductDetail',
+        component: () => import('../views/ProductDetail.vue'),
+        props: true,
     },
     {
         path: '/login',
