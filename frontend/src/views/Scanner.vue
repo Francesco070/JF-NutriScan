@@ -27,14 +27,25 @@
 
     <!-- Scanner Area -->
     <div class="scanner-view">
-      <!-- Video Element für Kamera (RICHTIGE VERSION - nicht gezoomt) -->
+      <!-- Video Element für Kamera (Live View) -->
       <video
+          v-show="!isFrozen"
           id="scanner-video"
           ref="videoElement"
           class="scanner-video"
           autoplay
           playsinline
       ></video>
+
+      <!-- Hidden QR Reader Element -->
+      <div id="qr-reader" style="display: none;"></div>
+
+      <!-- Canvas für Frozen Frame -->
+      <canvas
+          v-show="isFrozen"
+          ref="canvasElement"
+          class="scanner-video"
+      ></canvas>
 
       <!-- Scan Frame with Thick Corners -->
       <div class="scan-frame">
@@ -43,7 +54,7 @@
         <div class="frame-corner bottom-left"></div>
         <div class="frame-corner bottom-right"></div>
         <!-- Animated Scanner Line -->
-        <div class="scanner-line" :class="{ active: isScanning }"></div>
+        <div class="scanner-line" :class="{ active: isScanning && !isFrozen }"></div>
       </div>
 
       <!-- Product Found Preview (below scan frame) -->
@@ -76,6 +87,55 @@
           </v-card-text>
         </v-card>
       </transition>
+
+      <!-- No Product Found Message -->
+      <transition name="slide-up">
+        <v-card
+            v-if="noProductFound && !scannedProduct"
+            class="product-preview error-preview"
+            rounded="xl"
+        >
+          <v-card-text class="d-flex align-center pa-4">
+            <v-avatar size="60" rounded="lg" color="error" class="mr-3">
+              <v-icon color="white" size="32">mdi-alert-circle-outline</v-icon>
+            </v-avatar>
+            <div class="flex-grow-1">
+              <h4 class="text-subtitle-1 font-weight-bold white--text mb-1">No Product Found</h4>
+              <p class="text-caption text-medium-emphasis mb-0">
+                Kein Barcode oder QR-Code erkannt. Bitte erneut versuchen.
+              </p>
+            </div>
+            <v-btn
+                icon
+                size="small"
+                variant="text"
+                @click="noProductFound = false"
+            >
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-card-text>
+        </v-card>
+      </transition>
+
+      <!-- Analyzing Overlay -->
+      <transition name="fade">
+        <div v-if="isAnalyzing" class="analyzing-overlay">
+          <v-card color="rgba(0, 0, 0, 0.9)" rounded="xl" class="analyzing-card">
+            <v-card-text class="text-center pa-6">
+              <v-progress-circular
+                  indeterminate
+                  color="primary"
+                  size="64"
+                  class="mb-4"
+              ></v-progress-circular>
+              <h3 class="text-h6 font-weight-bold mb-2">Analyzing Image...</h3>
+              <p class="text-body-2 text-medium-emphasis">
+                Searching for barcode or QR code
+              </p>
+            </v-card-text>
+          </v-card>
+        </div>
+      </transition>
     </div>
 
     <!-- Bottom Controls -->
@@ -88,20 +148,21 @@
           color="surface"
           elevation="4"
           @click="uploadPhoto"
+          :disabled="isFrozen"
       >
         <v-icon>mdi-image-plus</v-icon>
       </v-btn>
 
-      <!-- Capture Button (Main) -->
+      <!-- Capture Button (Main) - Changes to Back when frozen -->
       <v-btn
           icon
           size="72"
-          color="primary"
+          :color="isFrozen ? 'error' : 'primary'"
           elevation="12"
           class="capture-btn"
-          @click="captureBarcode"
+          @click="isFrozen ? unfreeze() : captureBarcode()"
       >
-        <v-icon size="40">mdi-camera</v-icon>
+        <v-icon size="40">{{ isFrozen ? 'mdi-arrow-left' : 'mdi-camera' }}</v-icon>
       </v-btn>
 
       <!-- History -->
@@ -112,6 +173,7 @@
           color="surface"
           elevation="4"
           @click="toggleHistory"
+          :disabled="isFrozen"
       >
         <v-icon>mdi-history</v-icon>
       </v-btn>
@@ -166,16 +228,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useScanner } from '@/composables/useScanner'
 
 const router = useRouter()
 const videoElement = ref<HTMLVideoElement>()
+const canvasElement = ref<HTMLCanvasElement>()
 const flashOn = ref(false)
 const showHistory = ref(false)
 const scannedProduct = ref<any>(null)
 const isScanning = ref(false)
+const isFrozen = ref(false)
+const isAnalyzing = ref(false)
+const noProductFound = ref(false)
 let stream: MediaStream | null = null
+let scanInterval: number | null = null
+
+// Use the scanner composable
+const { scannedCode, scanFile } = useScanner()
 
 // Mock recent scans data
 const recentScans = ref([
@@ -222,7 +293,7 @@ const recentScans = ref([
 ])
 
 onMounted(async () => {
-  // Kamera starten (RICHTIGE VERSION)
+  // Kamera starten
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       video: {
@@ -237,6 +308,9 @@ onMounted(async () => {
     }
 
     isScanning.value = true
+
+    // Start automatic QR code scanning every 2 seconds
+    startAutomaticScanning()
   } catch (err) {
     console.error('Kamera-Zugriff fehlgeschlagen:', err)
   }
@@ -244,8 +318,74 @@ onMounted(async () => {
 
 onUnmounted(() => {
   // Kamera stoppen
+  stopAutomaticScanning()
   if (stream) {
     stream.getTracks().forEach(track => track.stop())
+  }
+})
+
+// Automatic QR code scanning from live video
+const startAutomaticScanning = () => {
+  scanInterval = window.setInterval(async () => {
+    if (!videoElement.value || isFrozen.value || isAnalyzing.value) return
+
+    try {
+      // Capture current frame to canvas
+      const canvas = document.createElement('canvas')
+      const video = videoElement.value
+
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+      // Convert canvas to blob
+      canvas.toBlob(async (blob) => {
+        if (!blob) return
+
+        const file = new File([blob], 'scan.jpg', { type: 'image/jpeg' })
+        const result = await scanFile(file)
+
+        if (result) {
+          console.log('✅ Automatisch QR/Barcode gefunden:', result)
+          // Don't show "no product found" for automatic scanning
+          // The scannedCode watcher will handle it
+        }
+      }, 'image/jpeg')
+    } catch (err) {
+      // Silent fail for automatic scanning
+    }
+  }, 2000) // Scan every 2 seconds
+}
+
+const stopAutomaticScanning = () => {
+  if (scanInterval) {
+    clearInterval(scanInterval)
+    scanInterval = null
+  }
+}
+
+// Watch for scanned codes
+watch(scannedCode, (newCode) => {
+  if (newCode) {
+    console.log('✅ QR Code erfolgreich gescannt:', newCode)
+
+    // Simulate product lookup
+    scannedProduct.value = {
+      barcode: newCode,
+      name: 'Greek Yogurt Natural',
+      brand: 'Chobani',
+      image: 'https://images.openfoodfacts.org/images/products/500/013/400/3850/front_en.3.400.jpg',
+      nutriscore: 'A'
+    }
+
+    // Auto-navigate after 2 seconds
+    setTimeout(() => {
+      router.push(`/product/${newCode}`)
+    }, 2000)
   }
 })
 
@@ -289,29 +429,95 @@ const switchCamera = async () => {
   }
 }
 
-const captureBarcode = () => {
-  // Simulate scanning
-  setTimeout(() => {
-    scannedProduct.value = {
-      barcode: '3760020507350',
-      name: 'Greek Yogurt Natural',
-      brand: 'Chobani',
-      image: 'https://images.openfoodfacts.org/images/products/500/013/400/3850/front_en.3.400.jpg',
-      nutriscore: 'A'
+const captureBarcode = async () => {
+  if (!videoElement.value || !canvasElement.value) return
+
+  // Freeze the screen
+  isFrozen.value = true
+  isAnalyzing.value = true
+  noProductFound.value = false
+
+  // Stop automatic scanning while frozen
+  stopAutomaticScanning()
+
+  // Capture frame to canvas
+  const video = videoElement.value
+  const canvas = canvasElement.value
+
+  canvas.width = video.videoWidth
+  canvas.height = video.videoHeight
+
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+  // Analyze the frozen frame
+  canvas.toBlob(async (blob) => {
+    if (!blob) {
+      isAnalyzing.value = false
+      return
     }
-  }, 1000)
+
+    const file = new File([blob], 'capture.jpg', { type: 'image/jpeg' })
+    const result = await scanFile(file)
+
+    isAnalyzing.value = false
+
+    if (result) {
+      console.log('✅ Barcode im Foto gefunden:', result)
+      // The scannedCode watcher will handle navigation
+    } else {
+      console.log('❌ No product found - Kein Barcode im Foto')
+      noProductFound.value = true
+
+      // Auto-hide no product found after 3 seconds
+      setTimeout(() => {
+        noProductFound.value = false
+      }, 3000)
+    }
+  }, 'image/jpeg')
 }
 
-const uploadPhoto = () => {
+const unfreeze = () => {
+  isFrozen.value = false
+  scannedProduct.value = null
+  noProductFound.value = false
+
+  // Resume automatic scanning
+  startAutomaticScanning()
+}
+
+const uploadPhoto = async () => {
   // Open file picker
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = 'image/*'
-  input.onchange = (e: any) => {
+  input.onchange = async (e: any) => {
     const file = e.target?.files?.[0]
     if (file) {
-      console.log('Photo uploaded:', file)
-      // Process uploaded photo for barcode scanning
+      console.log('📷 Foto hochgeladen:', file.name)
+
+      isAnalyzing.value = true
+      noProductFound.value = false
+
+      // Scan the uploaded image
+      const result = await scanFile(file)
+
+      isAnalyzing.value = false
+
+      if (result) {
+        console.log('✅ Barcode in hochgeladenem Bild gefunden:', result)
+        // The watch on scannedCode will handle navigation
+      } else {
+        console.log('❌ No product found - Kein Barcode im hochgeladenen Bild')
+        noProductFound.value = true
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          noProductFound.value = false
+        }, 5000)
+      }
     }
   }
   input.click()
@@ -495,9 +701,29 @@ const getNutriScoreColor = (score: string) => {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
-.position-relative {
-  position: relative;
-  z-index: 1;
+.error-preview {
+  border: 1px solid rgba(244, 67, 54, 0.3) !important;
+  cursor: default !important;
+}
+
+/* Analyzing Overlay */
+.analyzing-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 9;
+}
+
+.analyzing-card {
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(76, 175, 80, 0.2);
 }
 
 /* Scanner Controls */
@@ -516,6 +742,7 @@ const getNutriScoreColor = (score: string) => {
 
 .capture-btn {
   box-shadow: 0 8px 24px rgba(76, 175, 80, 0.5) !important;
+  transition: all 0.3s ease;
 }
 
 /* History Overlay - Centered with margin */
@@ -563,6 +790,16 @@ const getNutriScoreColor = (score: string) => {
 .slide-up-enter-from,
 .slide-up-leave-to {
   transform: scale(0.95);
+  opacity: 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 </style>
