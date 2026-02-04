@@ -1,19 +1,23 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.jf.nutriscan',
-  appName: 'JF-NutriScan',
+  appId: 'com.nutriscan.app',
+  appName: 'NutriScan',
   webDir: 'dist',
   server: {
     androidScheme: 'https',
   },
-  android: {
-    path: 'android',
-    // Für NixOS - Android Studio ist im PATH
-  },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 0,
+      launchShowDuration: 2000,
+      backgroundColor: "#4CAF50",
+      androidScaleType: "CENTER_CROP",
+      showSpinner: false,
+      androidSpinnerStyle: "large",
+      iosSpinnerStyle: "small",
+      spinnerColor: "#000000",
+      splashFullScreen: true,
+      splashImmersive: true,
     },
   },
 }
