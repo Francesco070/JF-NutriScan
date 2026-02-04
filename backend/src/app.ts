@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { authRoutes } from './routes/auth';
 import { productsRoutes } from './routes/products';
 
 export function createApp() {
@@ -21,6 +22,7 @@ export function createApp() {
 		return c.json({ status: 'ok', timestamp: new Date().toISOString() });
 	});
 
+	app.route('/api/auth', authRoutes);
 	app.route('/api/products', productsRoutes);
 
 	return app;

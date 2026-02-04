@@ -1,2 +1,9 @@
-// Database connections are disabled for now.
-export const sql = undefined;
+import postgres from 'postgres';
+
+const databaseUrl =
+	process.env.DATABASE_URL ??
+	'postgres://jf:JF-NutriScan123@localhost:5432/nutrisacan';
+
+export const sql = postgres(databaseUrl, {
+	max: 10,
+});
