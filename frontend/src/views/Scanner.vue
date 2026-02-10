@@ -166,7 +166,7 @@
             rounded="xl"
         >
           <v-card-text class="d-flex align-center pa-4">
-            <v-avatar size="60" rounded="lg" color="warning" class="mr-3">
+            <v-avatar size="60" rounded="lg" color="error" class="mr-3">
               <v-icon color="white" size="32">mdi-barcode-off</v-icon>
             </v-avatar>
             <div class="flex-grow-1">

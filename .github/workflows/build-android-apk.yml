@@ -1,0 +1,316 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Build Environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+env:
+  NODE_VERSION: '20'
+  JAVA_VERSION: '17'
+  ANDROID_BUILD_TOOLS_VERSION: '34.0.0'
+  ANDROID_COMPILE_SDK_VERSION: '34'
+
+jobs:
+  build-apk:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        # Falls du mehrere Varianten brauchst
+        build_type: [release]
+        # build_type: [debug, release]
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'gradle'
+
+      - name: 🤖 Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 📦 Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: 🔐 Create Environment File
+        working-directory: ./frontend
+        run: |
+          # Bestimme welche Umgebung verwendet wird
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            BUILD_ENV="${{ github.event.inputs.environment }}"
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            BUILD_ENV="production"
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            BUILD_ENV="staging"
+          else
+            BUILD_ENV="development"
+          fi
+          
+          echo "Building for environment: $BUILD_ENV"
+          echo "BUILD_ENV=$BUILD_ENV" >> $GITHUB_ENV
+          
+          # Erstelle .env.production File
+          cat > .env.production << EOF
+          VITE_APP_NAME=NutriScan
+          VITE_APP_VERSION=${{ github.ref_name }}
+          VITE_API_BASE_URL=${{ secrets[format('API_BASE_URL_{0}', env.BUILD_ENV)] || secrets.API_BASE_URL_PRODUCTION }}
+          VITE_OPEN_FOOD_FACTS_URL=https://world.openfoodfacts.org
+          VITE_ENABLE_AUTH=true
+          VITE_ENABLE_SYNC=true
+          VITE_ENABLE_PWA=true
+          VITE_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          VITE_GIT_COMMIT_SHA=${{ github.sha }}
+          VITE_GIT_BRANCH=${{ github.ref_name }}
+          EOF
+          
+          echo "✅ Environment file created for $BUILD_ENV"
+          cat .env.production
+
+      - name: 🏗️ Build Vue.js App
+        working-directory: ./frontend
+        run: |
+          echo "Building Vue.js application..."
+          npm run build
+          
+          # Zeige Build-Info
+          echo "Build completed!"
+          ls -lah dist/
+
+      - name: 📱 Setup Capacitor
+        working-directory: ./frontend
+        run: |
+          # Installiere Capacitor falls noch nicht vorhanden
+          if [ ! -d "node_modules/@capacitor/cli" ]; then
+            npm install @capacitor/core @capacitor/cli @capacitor/android
+          fi
+          
+          # Sync mit Android
+          npx cap sync android
+
+      - name: 📝 Update Android Version
+        working-directory: ./frontend/android/app
+        run: |
+          # Extrahiere Version aus package.json
+          VERSION_NAME=$(node -p "require('../../package.json').version")
+          VERSION_CODE=${{ github.run_number }}
+          
+          echo "Version Name: $VERSION_NAME"
+          echo "Version Code: $VERSION_CODE"
+          
+          # Update build.gradle
+          sed -i "s/versionCode .*/versionCode $VERSION_CODE/" build.gradle
+          sed -i "s/versionName .*/versionName \"$VERSION_NAME\"/" build.gradle
+
+      - name: 🔑 Setup Keystore (Release only)
+        if: matrix.build_type == 'release'
+        working-directory: ./frontend/android
+        run: |
+          # Erstelle keystore aus Secret
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
+          
+          # Erstelle key.properties
+          cat > key.properties << EOF
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=release.keystore
+          EOF
+
+      - name: 🏗️ Build APK
+        working-directory: ./frontend/android
+        run: |
+          if [[ "${{ matrix.build_type }}" == "release" ]]; then
+            ./gradlew assembleRelease --stacktrace
+          else
+            ./gradlew assembleDebug --stacktrace
+          fi
+
+      - name: 📦 Prepare APK Artifacts
+        run: |
+          # Erstelle output Ordner
+          mkdir -p apk-output
+          
+          # Kopiere APKs
+          if [[ "${{ matrix.build_type }}" == "release" ]]; then
+            cp frontend/android/app/build/outputs/apk/release/*.apk apk-output/
+          
+            # Rename für bessere Identifikation
+            cd apk-output
+            for file in *.apk; do
+              mv "$file" "nutriscan-${BUILD_ENV}-v${{ github.run_number }}-release.apk"
+            done
+          else
+            cp frontend/android/app/build/outputs/apk/debug/*.apk apk-output/
+          
+            cd apk-output
+            for file in *.apk; do
+              mv "$file" "nutriscan-${BUILD_ENV}-v${{ github.run_number }}-debug.apk"
+            done
+          fi
+          
+          cd ..
+          ls -lah apk-output/
+
+      - name: 📊 Generate APK Info
+        run: |
+          cat > apk-output/build-info.txt << EOF
+          Build Information
+          ==================
+          App: NutriScan
+          Version: ${{ github.ref_name }}
+          Build Number: ${{ github.run_number }}
+          Environment: ${BUILD_ENV}
+          Build Type: ${{ matrix.build_type }}
+          Git Commit: ${{ github.sha }}
+          Git Branch: ${{ github.ref_name }}
+          Build Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          Workflow: ${{ github.workflow }}
+          Runner: ${{ runner.os }} ${{ runner.arch }}
+          EOF
+          
+          cat apk-output/build-info.txt
+
+      - name: 📤 Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nutriscan-apk-${{ matrix.build_type }}-${{ github.run_number }}
+          path: |
+            apk-output/*.apk
+            apk-output/build-info.txt
+          retention-days: 30
+
+      - name: 📝 Create Release Notes
+        if: startsWith(github.ref, 'refs/tags/v')
+        id: release_notes
+        run: |
+          cat > release-notes.md << EOF
+          ## NutriScan Android APK
+          
+          ### Build Information
+          - **Version**: ${{ github.ref_name }}
+          - **Build**: #${{ github.run_number }}
+          - **Environment**: ${BUILD_ENV}
+          - **Commit**: ${{ github.sha }}
+          - **Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          ### Downloads
+          - Release APK: nutriscan-${BUILD_ENV}-v${{ github.run_number }}-release.apk
+          
+          ### Installation
+          1. Download the APK file
+          2. Enable "Install from Unknown Sources" on your Android device
+          3. Install the APK
+          4. Configure API URL in settings if needed
+          
+          ### API Configuration
+          - Default API URL: ${{ secrets.API_BASE_URL_PRODUCTION }}
+          
+          ---
+          Built with GitHub Actions
+          EOF
+          
+          cat release-notes.md
+
+      - name: 🚀 Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') && matrix.build_type == 'release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            apk-output/*.apk
+            apk-output/build-info.txt
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 💬 Add PR Comment with Download Link
+        if: github.event_name == 'pull_request' && matrix.build_type == 'debug'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `## 📱 APK Build Successful!
+            
+            **Build Information:**
+            - Version: \`${{ github.ref_name }}\`
+            - Build Number: \`${{ github.run_number }}\`
+            - Commit: \`${{ github.sha }}\`
+            
+            **Download APK:**
+            The APK is available as an artifact in this workflow run.
+            
+            [📥 Download APK Artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+            **Installation:**
+            1. Download the artifact
+            2. Extract the ZIP file
+            3. Install the APK on your Android device
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: 🧹 Cleanup Secrets
+        if: always()
+        working-directory: ./frontend/android
+        run: |
+          rm -f app/release.keystore
+          rm -f key.properties
+
+  notify:
+    name: Send Notifications
+    needs: build-apk
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: 📧 Notify Success
+        if: needs.build-apk.result == 'success'
+        run: |
+          echo "✅ APK Build successful!"
+          echo "Download artifacts from the Actions tab"
+
+      - name: 🚨 Notify Failure
+        if: needs.build-apk.result == 'failure'
+        run: |
+          echo "❌ APK Build failed!"
+          echo "Check the logs for details"
