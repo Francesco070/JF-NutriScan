@@ -1,42 +1,48 @@
 <template>
   <v-container class="product-detail">
     <!-- Loading State -->
-    <v-row v-if="isLoading" justify="center" class="mt-8">
-      <v-col cols="12" class="text-center">
-        <v-progress-circular
-            indeterminate
-            color="primary"
-            size="64"
-        />
-        <p class="mt-4 text-h6">Produkt wird geladen...</p>
+    <v-row v-if="isLoading" justify="center" align="center" class="state-container">
+      <v-col cols="12" sm="10" md="8" lg="6">
+        <div class="text-center">
+          <v-progress-circular
+              indeterminate
+              color="primary"
+              size="80"
+              width="6"
+          />
+
+          <p class="mt-6 text-h6">Produkt wird geladen...</p>
+
+          <p class="text-body-2 text-grey mt-2">
+            Barcode: {{ route.params.barcode }}
+          </p>
+        </div>
       </v-col>
     </v-row>
 
     <!-- Error State -->
-    <v-row v-else-if="error" justify="center" class="mt-8">
-      <v-col cols="12" md="6">
-        <v-alert type="error" prominent>
-          <v-row align="center">
-            <v-col cols="auto">
-              <v-icon size="48">mdi-alert-circle</v-icon>
-            </v-col>
-            <v-col>
-              <div class="text-h6">{{ error }}</div>
-              <div class="text-body-2 mt-2">
-                Barcode: {{ route.params.barcode }}
-              </div>
-            </v-col>
-          </v-row>
+    <v-row v-else-if="error" justify="center" align="center" class="state-container">
+      <v-col cols="12" sm="10" md="8" lg="6">
+        <div class="text-center">
+          <v-icon color="error" size="80">mdi-close-circle</v-icon>
+
+          <p class="mt-6 text-h6">{{ error }}</p>
+
+          <p class="text-body-2 text-grey mt-2">
+            Barcode: {{ route.params.barcode }}
+          </p>
+
           <v-btn
-              color="white"
-              variant="outlined"
-              class="mt-4"
+              color="primary"
+              variant="flat"
+              size="large"
+              prepend-icon="mdi-barcode-scan"
+              class="mt-6"
               @click="router.push('/scanner')"
           >
-            <v-icon left>mdi-barcode-scan</v-icon>
             Erneut scannen
           </v-btn>
-        </v-alert>
+        </div>
       </v-col>
     </v-row>
 
@@ -50,13 +56,22 @@
               <!-- Produkt Bild -->
               <v-col cols="12" md="4" class="d-flex align-center justify-center pa-4">
                 <v-img
-                    :src="product.imageUrl || 'https://via.placeholder.com/300x300?text=Kein+Bild'"
+                    v-if="product.imageUrl"
+                    :src="product.imageUrl"
                     :alt="product.name || 'Produkt'"
                     max-width="300"
                     max-height="300"
                     contain
                     rounded="xl"
                 />
+                <v-avatar
+                    v-else
+                    size="300"
+                    color="grey-lighten-3"
+                    rounded="xl"
+                >
+                  <v-icon size="120" color="grey-darken-1">mdi-image-off-outline</v-icon>
+                </v-avatar>
               </v-col>
 
               <!-- Produkt Info -->
@@ -396,6 +411,10 @@ onMounted(() => {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.state-container {
+  min-height: 60vh;
 }
 
 .nutrient-card {

@@ -75,31 +75,28 @@
       <!-- Product Found Preview (below scan frame) -->
       <transition name="slide-up">
         <v-card
-            v-if="scannedProduct"
+            v-if="scannedProduct && !isLoadingProduct"
             class="product-preview"
             rounded="xl"
             @click="openProduct"
         >
           <v-card-text class="d-flex align-center pa-4">
-            <v-avatar size="60" rounded="lg" class="mr-3">
-              <v-img :src="scannedProduct.image"></v-img>
+            <v-avatar size="60" rounded="lg" class="mr-3" :color="scannedProduct.imageUrl ? undefined : 'grey-lighten-2'">
+              <v-img
+                  v-if="scannedProduct.imageUrl"
+                  :src="scannedProduct.imageUrl"
+                  :alt="scannedProduct.name"
+              ></v-img>
+              <v-icon v-else color="grey-darken-1" size="32">mdi-image-off-outline</v-icon>
             </v-avatar>
             <div class="flex-grow-1">
               <div class="d-flex align-center mb-1">
-                <v-chip
-                    :color="getNutriScoreColor(scannedProduct.nutriscore)"
-                    size="small"
-                    class="mr-2"
-                >
-                  {{ scannedProduct.nutriscore }}
-                </v-chip>
-                <v-icon color="success" size="20">mdi-check-circle</v-icon>
+                <h4 class="text-subtitle-1 font-weight-bold white--text">
+                  {{ scannedProduct.name || 'Unbekanntes Produkt' }}
+                </h4>
               </div>
-              <h4 class="text-subtitle-1 font-weight-bold white--text">
-                {{ scannedProduct.name }}
-              </h4>
               <p class="text-caption text-medium-emphasis mb-0">
-                {{ scannedProduct.brand }}
+                {{ scannedProduct.brand || 'Keine Marke' }}
               </p>
             </div>
             <v-icon color="white">mdi-chevron-right</v-icon>
@@ -107,10 +104,38 @@
         </v-card>
       </transition>
 
+      <!-- Loading Product Preview -->
+      <transition name="slide-up">
+        <v-card
+            v-if="isLoadingProduct"
+            class="product-preview"
+            rounded="xl"
+        >
+          <v-card-text class="d-flex align-center pa-4">
+            <v-avatar size="60" rounded="lg" color="primary" class="mr-3">
+              <v-progress-circular
+                  indeterminate
+                  color="white"
+                  size="32"
+                  width="3"
+              ></v-progress-circular>
+            </v-avatar>
+            <div class="flex-grow-1">
+              <h4 class="text-subtitle-1 font-weight-bold white--text mb-1">
+                Produkt wird geladen...
+              </h4>
+              <p class="text-caption text-medium-emphasis mb-0">
+                Barcode: {{ currentBarcode }}
+              </p>
+            </div>
+          </v-card-text>
+        </v-card>
+      </transition>
+
       <!-- No Product Found Message -->
       <transition name="slide-up">
         <v-card
-            v-if="noProductFound && !scannedProduct"
+            v-if="noProductFound && !scannedProduct && !isLoadingProduct"
             class="product-preview error-preview"
             rounded="xl"
         >
@@ -120,13 +145,39 @@
             </v-avatar>
             <div class="flex-grow-1">
               <h4 class="text-subtitle-1 font-weight-bold white--text mb-1">
-                No Product Found
+                Produkt nicht gefunden
               </h4>
               <p class="text-caption text-medium-emphasis mb-0">
-                Kein Barcode oder QR-Code erkannt. Bitte erneut versuchen.
+                Kein Produkt für diesen Barcode in der Datenbank gefunden.
               </p>
             </div>
-            <v-btn icon size="small" variant="text" @click="noProductFound = false">
+            <v-btn icon size="small" variant="text" @click="clearMessages">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-card-text>
+        </v-card>
+      </transition>
+
+      <!-- No Barcode Detected Message -->
+      <transition name="slide-up">
+        <v-card
+            v-if="noBarcodeDetected && !scannedProduct && !isLoadingProduct && !noProductFound"
+            class="product-preview error-preview"
+            rounded="xl"
+        >
+          <v-card-text class="d-flex align-center pa-4">
+            <v-avatar size="60" rounded="lg" color="warning" class="mr-3">
+              <v-icon color="white" size="32">mdi-barcode-off</v-icon>
+            </v-avatar>
+            <div class="flex-grow-1">
+              <h4 class="text-subtitle-1 font-weight-bold white--text mb-1">
+                Kein Barcode erkannt
+              </h4>
+              <p class="text-caption text-medium-emphasis mb-0">
+                Bitte richten Sie die Kamera auf einen Barcode oder QR-Code.
+              </p>
+            </div>
+            <v-btn icon size="small" variant="text" @click="clearMessages">
               <v-icon>mdi-close</v-icon>
             </v-btn>
           </v-card-text>
@@ -243,8 +294,10 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useScanner } from '@/composables/useScanner'
+import { useProductsStore } from '@/stores/products'
 
 const router = useRouter()
+const productsStore = useProductsStore()
 const videoElement = ref<HTMLVideoElement>()
 const canvasElement = ref<HTMLCanvasElement>()
 const flashOn = ref(false)
@@ -253,8 +306,11 @@ const scannedProduct = ref<any>(null)
 const isScanning = ref(false)
 const isFrozen = ref(false)
 const isAnalyzing = ref(false)
+const isLoadingProduct = ref(false)
 const noProductFound = ref(false)
-const cameraReady = ref(false) // NEU: Kamera-Status
+const noBarcodeDetected = ref(false)
+const currentBarcode = ref('')
+const cameraReady = ref(false)
 
 let stream: MediaStream | null = null
 let scanInterval: number | null = null
@@ -320,11 +376,10 @@ onMounted(async () => {
 
     if (videoElement.value) {
       videoElement.value.srcObject = stream
-      // Warte auf Video-Ready Events
     }
   } catch (err) {
     console.error('Kamera-Zugriff fehlgeschlagen:', err)
-    cameraReady.value = true // Zeige UI trotzdem an
+    cameraReady.value = true
   }
 })
 
@@ -343,7 +398,6 @@ const onVideoReady = () => {
 const onVideoCanPlay = () => {
   console.log('✅ Video can play - Kamera ist bereit!')
 
-  // Kleine Verzögerung für smooth transition
   setTimeout(() => {
     cameraReady.value = true
     isScanning.value = true
@@ -354,7 +408,7 @@ const onVideoCanPlay = () => {
 // Automatic QR code scanning from live video
 const startAutomaticScanning = () => {
   scanInterval = window.setInterval(async () => {
-    if (!videoElement.value || isFrozen.value || isAnalyzing.value || !cameraReady.value) return
+    if (!videoElement.value || isFrozen.value || isAnalyzing.value || !cameraReady.value || isLoadingProduct.value) return
 
     try {
       const canvas = document.createElement('canvas')
@@ -387,23 +441,53 @@ const stopAutomaticScanning = () => {
   }
 }
 
-// Watch for scanned codes
-watch(scannedCode, (newCode) => {
+// Watch for scanned codes and fetch product data
+watch(scannedCode, async (newCode) => {
   if (newCode) {
     console.log('✅ QR Code erfolgreich gescannt:', newCode)
-    scannedProduct.value = {
-      barcode: newCode,
-      name: 'Greek Yogurt Natural',
-      brand: 'Chobani',
-      image: 'https://images.openfoodfacts.org/images/products/500/013/400/3850/front_en.3.400.jpg',
-      nutriscore: 'A'
-    }
+    currentBarcode.value = newCode
 
-    setTimeout(() => {
-      router.push(`/product/${newCode}`)
-    }, 2000)
+    // Clear previous states
+    clearMessages()
+
+    // Start loading
+    isLoadingProduct.value = true
+
+    try {
+      // Fetch product from store
+      const product = await productsStore.fetchProductByBarcode(newCode)
+
+      if (product) {
+        scannedProduct.value = product
+
+        // Navigate to product detail after showing preview
+        setTimeout(() => {
+          router.push(`/product/${newCode}`)
+        }, 2000)
+      } else {
+        // Product not found in database
+        noProductFound.value = true
+        setTimeout(() => {
+          clearMessages()
+        }, 4000)
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden des Produkts:', error)
+      noProductFound.value = true
+      setTimeout(() => {
+        clearMessages()
+      }, 4000)
+    } finally {
+      isLoadingProduct.value = false
+    }
   }
 })
+
+const clearMessages = () => {
+  scannedProduct.value = null
+  noProductFound.value = false
+  noBarcodeDetected.value = false
+}
 
 const toggleFlash = async () => {
   flashOn.value = !flashOn.value
@@ -452,7 +536,7 @@ const captureBarcode = async () => {
 
   isFrozen.value = true
   isAnalyzing.value = true
-  noProductFound.value = false
+  clearMessages()
   stopAutomaticScanning()
 
   const video = videoElement.value
@@ -477,10 +561,10 @@ const captureBarcode = async () => {
     if (result) {
       console.log('✅ Barcode im Foto gefunden:', result)
     } else {
-      console.log('❌ No product found - Kein Barcode im Foto')
-      noProductFound.value = true
+      console.log('❌ No barcode detected - Kein Barcode im Foto')
+      noBarcodeDetected.value = true
       setTimeout(() => {
-        noProductFound.value = false
+        clearMessages()
       }, 3000)
     }
   }, 'image/jpeg')
@@ -488,8 +572,7 @@ const captureBarcode = async () => {
 
 const unfreeze = () => {
   isFrozen.value = false
-  scannedProduct.value = null
-  noProductFound.value = false
+  clearMessages()
   startAutomaticScanning()
 }
 
@@ -502,7 +585,7 @@ const uploadPhoto = async () => {
     if (file) {
       console.log('📷 Foto hochgeladen:', file.name)
       isAnalyzing.value = true
-      noProductFound.value = false
+      clearMessages()
 
       const result = await scanFile(file)
       isAnalyzing.value = false
@@ -510,10 +593,10 @@ const uploadPhoto = async () => {
       if (result) {
         console.log('✅ Barcode in hochgeladenem Bild gefunden:', result)
       } else {
-        console.log('❌ No product found - Kein Barcode im hochgeladenen Bild')
-        noProductFound.value = true
+        console.log('❌ No barcode detected - Kein Barcode im hochgeladenen Bild')
+        noBarcodeDetected.value = true
         setTimeout(() => {
-          noProductFound.value = false
+          clearMessages()
         }, 5000)
       }
     }
@@ -539,10 +622,15 @@ const openProduct = () => {
 const getNutriScoreColor = (score: string) => {
   const colors: Record<string, string> = {
     'A': 'success',
+    'a': 'success',
     'B': 'light-green',
+    'b': 'light-green',
     'C': 'warning',
+    'c': 'warning',
     'D': 'orange',
-    'E': 'error'
+    'd': 'orange',
+    'E': 'error',
+    'e': 'error'
   }
   return colors[score] || 'grey'
 }
