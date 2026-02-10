@@ -61,6 +61,11 @@ jobs:
       - name: 🤖 Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: 📦 Install Android Build Tools
+        run: |
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;${{ env.ANDROID_BUILD_TOOLS_VERSION }}"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-${{ env.ANDROID_COMPILE_SDK_VERSION }}"
+
       - name: 📦 Install Frontend Dependencies
         working-directory: ./frontend
         run: npm ci
@@ -113,7 +118,12 @@ jobs:
           if [ ! -d "node_modules/@capacitor/cli" ]; then
             npm install @capacitor/core @capacitor/cli @capacitor/android
           fi
+          
+          echo "🔄 Syncing Capacitor..."
           npx cap sync android
+          
+          echo "📋 Capacitor Info:"
+          npx cap doctor
 
       - name: 📝 Update Android Version
         working-directory: ./frontend/android/app
@@ -124,25 +134,139 @@ jobs:
           echo "Version Name: $VERSION_NAME"
           echo "Version Code: $VERSION_CODE"
           
+          # Backup original build.gradle
+          cp build.gradle build.gradle.backup
+          
+          # Update versionCode and versionName
           sed -i "s/versionCode .*/versionCode $VERSION_CODE/" build.gradle
           sed -i "s/versionName .*/versionName \"$VERSION_NAME\"/" build.gradle
+          
+          echo "✅ Updated build.gradle:"
+          grep -E "versionCode|versionName" build.gradle
 
       - name: 🔑 Setup Keystore
         working-directory: ./frontend/android
         run: |
+          # Decode und speichere Keystore
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
           
+          # Verify Keystore
+          if [ ! -f "app/release.keystore" ]; then
+            echo "❌ Keystore wurde nicht erstellt!"
+            exit 1
+          fi
+          
+          echo "✅ Keystore erstellt ($(stat -c%s app/release.keystore) bytes)"
+          
+          # Create key.properties
           cat > key.properties << EOF
           storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
           keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
           storeFile=release.keystore
           EOF
+          
+          echo "✅ key.properties erstellt"
+          
+          # Verify Keystore kann gelesen werden (ohne Passwort anzuzeigen)
+          keytool -list -v -keystore app/release.keystore -storepass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" | head -20
+
+      - name: 🔍 Pre-Build Check
+        working-directory: ./frontend/android
+        run: |
+          echo "=== Android Project Structure ==="
+          ls -lah
+          
+          echo ""
+          echo "=== App Directory ==="
+          ls -lah app/
+          
+          echo ""
+          echo "=== Gradle Version ==="
+          ./gradlew --version
+          
+          echo ""
+          echo "=== Check build.gradle ==="
+          cat app/build.gradle | grep -A 20 "defaultConfig"
+
+      - name: 🏗️ Clean Build
+        working-directory: ./frontend/android
+        run: |
+          echo "🧹 Cleaning previous builds..."
+          ./gradlew clean --stacktrace
 
       - name: 🏗️ Build Release APK
         working-directory: ./frontend/android
         run: |
-          ./gradlew assembleRelease --stacktrace
+          echo "🔨 Building Release APK..."
+          ./gradlew assembleRelease --stacktrace --info --no-daemon
+          
+          echo ""
+          echo "✅ Build completed!"
+
+      - name: 🔍 Verify APK Output
+        working-directory: ./frontend/android
+        run: |
+          echo "=== APK Build Outputs ==="
+          find app/build/outputs/apk -type f -name "*.apk" -ls
+          
+          APK_PATH=$(find app/build/outputs/apk/release -type f -name "*.apk" | head -1)
+          
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ Keine APK gefunden!"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ APK gefunden: $APK_PATH"
+          echo "📦 Größe: $(stat -c%s "$APK_PATH" | numfmt --to=iec-i --suffix=B)"
+
+      - name: 🔐 Verify APK Signature
+        working-directory: ./frontend/android
+        run: |
+          APK_PATH=$(find app/build/outputs/apk/release -type f -name "*.apk" | head -1)
+          
+          echo "=== APK Signature Verification ==="
+          $ANDROID_HOME/build-tools/${{ env.ANDROID_BUILD_TOOLS_VERSION }}/apksigner verify --verbose "$APK_PATH"
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ APK ist korrekt signiert!"
+          else
+            echo "❌ APK Signatur-Verifikation fehlgeschlagen!"
+            exit 1
+          fi
+
+      - name: 🔍 APK Detailed Info
+        working-directory: ./frontend/android
+        run: |
+          APK_PATH=$(find app/build/outputs/apk/release -type f -name "*.apk" | head -1)
+          
+          echo "=== APK Package Information ==="
+          $ANDROID_HOME/build-tools/${{ env.ANDROID_BUILD_TOOLS_VERSION }}/aapt dump badging "$APK_PATH" | grep -E "package:|sdkVersion:|targetSdkVersion:|launchable-activity:"
+          
+          echo ""
+          echo "=== APK Permissions ==="
+          $ANDROID_HOME/build-tools/${{ env.ANDROID_BUILD_TOOLS_VERSION }}/aapt dump permissions "$APK_PATH"
+          
+          echo ""
+          echo "=== APK Certificate Info ==="
+          keytool -printcert -jarfile "$APK_PATH" | head -30
+
+      - name: 📦 Check APK Alignment
+        working-directory: ./frontend/android
+        run: |
+          APK_PATH=$(find app/build/outputs/apk/release -type f -name "*.apk" | head -1)
+          
+          echo "=== Checking APK Alignment ==="
+          if $ANDROID_HOME/build-tools/${{ env.ANDROID_BUILD_TOOLS_VERSION }}/zipalign -c -v 4 "$APK_PATH"; then
+            echo "✅ APK ist korrekt aligned!"
+          else
+            echo "⚠️ APK ist nicht aligned - wird korrigiert..."
+            ALIGNED_APK="${APK_PATH%.apk}-aligned.apk"
+            $ANDROID_HOME/build-tools/${{ env.ANDROID_BUILD_TOOLS_VERSION }}/zipalign -v 4 "$APK_PATH" "$ALIGNED_APK"
+            mv "$ALIGNED_APK" "$APK_PATH"
+            echo "✅ APK wurde aligned!"
+          fi
 
       - name: 📦 Prepare APK
         id: apk-info
@@ -150,21 +274,18 @@ jobs:
           mkdir -p apk-output
           
           VERSION_NAME=$(node -p "require('./frontend/package.json').version")
+          APK_PATH=$(find frontend/android/app/build/outputs/apk/release -type f -name "*.apk" | head -1)
           
-          cp frontend/android/app/build/outputs/apk/release/*.apk apk-output/
+          APK_NAME="NutriScan-${BUILD_ENV}-v${VERSION_NAME}-build${{ github.run_number }}.apk"
           
-          cd apk-output
-          for file in *.apk; do
-            APK_NAME="NutriScan-${BUILD_ENV}-v${VERSION_NAME}-build${{ github.run_number }}.apk"
-            mv "$file" "$APK_NAME"
-            echo "apk-name=$APK_NAME" >> $GITHUB_OUTPUT
-          done
+          cp "$APK_PATH" "apk-output/$APK_NAME"
           
+          echo "apk-name=$APK_NAME" >> $GITHUB_OUTPUT
           echo "version=${VERSION_NAME}" >> $GITHUB_OUTPUT
           echo "build-number=${{ github.run_number }}" >> $GITHUB_OUTPUT
           echo "environment=${BUILD_ENV}" >> $GITHUB_OUTPUT
           
-          cd ..
+          echo "✅ APK prepared: $APK_NAME"
           ls -lah apk-output/
 
       - name: 📊 Generate Build Info
@@ -174,6 +295,7 @@ jobs:
           ===========================
           
           App Name: NutriScan
+          Package: com.nutriscan.app
           Version: ${{ steps.apk-info.outputs.version }}
           Build Number: ${{ github.run_number }}
           Environment: ${{ steps.apk-info.outputs.environment }}
@@ -189,6 +311,16 @@ jobs:
           Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
           Workflow: ${{ github.workflow }}
           Run ID: ${{ github.run_id }}
+          Node Version: ${{ env.NODE_VERSION }}
+          Java Version: ${{ env.JAVA_VERSION }}
+          Android SDK: ${{ env.ANDROID_COMPILE_SDK_VERSION }}
+          
+          APK Information
+          ===============
+          File: ${{ steps.apk-info.outputs.apk-name }}
+          Signed: Yes (Release Keystore)
+          Min SDK: 22 (Android 5.1)
+          Target SDK: 34 (Android 14)
           
           Installation
           ============
@@ -196,6 +328,14 @@ jobs:
           2. Transfer to your Android device
           3. Enable "Install from Unknown Sources"
           4. Install the APK
+          
+          Troubleshooting
+          ===============
+          Falls Installation fehlschlägt:
+          - Stelle sicher, dass keine alte Version installiert ist
+          - Aktiviere "Install from Unknown Sources" in den Einstellungen
+          - Prüfe ob genug Speicherplatz verfügbar ist
+          - Versuche "adb install -r nutriscan.apk" wenn USB-Debugging aktiv ist
           
           Links
           =====
@@ -223,6 +363,7 @@ jobs:
         run: |
           rm -f app/release.keystore
           rm -f key.properties
+          rm -f app/build.gradle.backup
 
   # AUTOMATISCHES RELEASE - BEI JEDEM PUSH AUF MAIN/DEVELOP
   create-release:
@@ -290,6 +431,7 @@ jobs:
           | **Version** | ${{ needs.build-apk.outputs.version }} |
           | **Build Number** | ${{ needs.build-apk.outputs.build-number }} |
           | **Environment** | ${{ needs.build-apk.outputs.environment }} |
+          | **Package** | `com.nutriscan.app` |
           | **Branch** | `${{ github.ref_name }}` |
           | **Commit** | `${{ github.sha }}` |
           | **Build Date** | $(date -u +"%Y-%m-%d %H:%M:%S UTC") |
@@ -303,6 +445,14 @@ jobs:
           3. **Aktiviere** "Installation aus unbekannten Quellen" in den Einstellungen
           4. **Tippe** auf die APK-Datei zur Installation
           5. **Fertig!** Starte NutriScan 🎉
+          
+          ### ⚠️ Troubleshooting
+          
+          Falls die Installation fehlschlägt:
+          - **Alte Version deinstallieren** falls vorhanden
+          - **Speicherplatz prüfen** (mind. 100MB frei)
+          - **"Aus unbekannten Quellen"** in Einstellungen aktivieren
+          - Bei weiterem Problem: [Issue erstellen](https://github.com/${{ github.repository }}/issues)
           
           ---
           
@@ -318,10 +468,11 @@ jobs:
           
           ### 🔧 Technische Details
           
-          - **Android Min SDK:** 22 (Android 5.1)
+          - **Package ID:** `com.nutriscan.app`
+          - **Min SDK:** 22 (Android 5.1+)
           - **Target SDK:** 34 (Android 14)
-          - **Signiert:** Ja (Release Keystore)
-          - **API URL:** Pre-konfiguriert
+          - **Signiert:** Ja ✅
+          - **Aligned:** Ja ✅
           
           ---
           
@@ -349,7 +500,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Lösche Release und Tag falls vorhanden
           gh release delete "${{ steps.release_info.outputs.release-tag }}" --yes --cleanup-tag || true
 
       - name: 🚀 Create GitHub Release
