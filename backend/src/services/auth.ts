@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { sql } from '../db/connection';
+import { Prisma } from '@prisma/client';
+import { prisma } from '../db/prisma';
 import { getJwtSecret } from '../utils/jwt';
 
 export class EmailAlreadyExistsError extends Error {
@@ -20,16 +21,24 @@ class AuthService {
 		const passwordHash = await bcrypt.hash(password, 10);
 
 		try {
-			const rows = await sql<
-				{ user_id: number }[]
-			>`INSERT INTO account (firstname, lastname, email, password)
-			  VALUES (${firstname}, ${lastname}, ${email}, ${passwordHash})
-			  RETURNING user_id`;
-			const userId = rows[0]?.user_id;
-			return { userId: userId ? String(userId) : null };
+			const user = await prisma.account.create({
+				data: {
+					firstname,
+					lastname,
+					email,
+					password: passwordHash,
+				},
+				select: {
+					userId: true,
+				},
+			});
+
+			return { userId: String(user.userId) };
 		} catch (error) {
-			const err = error as { code?: string };
-			if (err.code === '23505') {
+			if (
+				error instanceof Prisma.PrismaClientKnownRequestError &&
+				error.code === 'P2002'
+			) {
 				throw new EmailAlreadyExistsError();
 			}
 			throw error;
@@ -37,11 +46,14 @@ class AuthService {
 	}
 
 	public async login(email: string, password: string) {
-		const rows = await sql<
-			{ user_id: number; password: string }[]
-		>`SELECT user_id, password FROM account WHERE email = ${email} LIMIT 1`;
+		const user = await prisma.account.findUnique({
+			where: { email },
+			select: {
+				userId: true,
+				password: true,
+			},
+		});
 
-		const user = rows[0];
 		if (!user) {
 			return null;
 		}
@@ -51,7 +63,7 @@ class AuthService {
 			return null;
 		}
 
-		const userId = String(user.user_id);
+		const userId = String(user.userId);
 		const token = jwt.sign({ userId }, getJwtSecret(), {
 			expiresIn: '1h',
 		});
