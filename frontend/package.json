@@ -13,30 +13,31 @@
     "cap:run": "npm run build && cap sync && cap run android"
   },
   "dependencies": {
-    "vue": "^3.5.13",
-    "vue-router": "^4.4.5",
-    "pinia": "^2.2.8",
-    "vuetify": "^3.7.5",
-    "@mdi/font": "^7.4.47",
-    "axios": "^1.7.9",
-    "idb": "^8.0.2",
-    "dayjs": "^1.11.13",
-    "lodash-es": "^4.17.21",
-    "html5-qrcode": "^2.3.8",
-    "@capacitor/core": "^5.7.8",
+    "@capacitor-community/barcode-scanner": "^4.0.1",
     "@capacitor/android": "^5.7.8",
+    "@capacitor/core": "^5.7.8",
     "@capacitor/network": "^5.0.8",
     "@capacitor/preferences": "^5.0.8",
-    "@capacitor-community/barcode-scanner": "^4.0.1"
+    "@mdi/font": "^7.4.47",
+    "@vueuse/core": "^14.2.1",
+    "axios": "^1.7.9",
+    "dayjs": "^1.11.13",
+    "html5-qrcode": "^2.3.8",
+    "idb": "^8.0.2",
+    "lodash-es": "^4.17.21",
+    "pinia": "^2.2.8",
+    "vue": "^3.5.13",
+    "vue-router": "^4.4.5",
+    "vuetify": "^3.7.5"
   },
   "devDependencies": {
+    "@capacitor/cli": "^5.7.8",
+    "@types/lodash-es": "^4.17.12",
     "@vitejs/plugin-vue": "^5.2.1",
     "typescript": "~5.6.2",
     "vite": "^6.0.5",
-    "vue-tsc": "^2.1.10",
-    "vite-plugin-vuetify": "^2.0.4",
     "vite-plugin-pwa": "^0.21.1",
-    "@types/lodash-es": "^4.17.12",
-    "@capacitor/cli": "^5.7.8"
+    "vite-plugin-vuetify": "^2.0.4",
+    "vue-tsc": "^2.1.10"
   }
 }

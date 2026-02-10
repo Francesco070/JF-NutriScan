@@ -13,6 +13,34 @@ export default createVuetify({
             mdi,
         },
     },
+
+    defaults: {
+        VCard: {
+            rounded: 'xl',
+        },
+
+        VBtn: {
+            rounded: 'xl',
+        },
+
+        VImg: {
+            rounded: 'xl',
+        },
+
+        VTextField: {
+            rounded: 'xl',
+            variant: 'outlined',
+        },
+
+        VChip: {
+            rounded: 'xl',
+        },
+
+        VDialog: {
+            rounded: 'xl',
+        },
+    },
+
     theme: {
         defaultTheme: 'dark',
         themes: {
