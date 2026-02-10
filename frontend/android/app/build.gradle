@@ -18,10 +18,8 @@ android {
         }
     }
 
-    // WICHTIG: Signatur-Konfiguration für Release-Builds
     signingConfigs {
         release {
-            // Lade Keystore-Informationen aus key.properties
             def keystorePropertiesFile = rootProject.file("key.properties")
             def keystoreProperties = new Properties()
 
@@ -47,18 +45,14 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 
-            // Optional: Shrink Resources für kleinere APK
-            // shrinkResources false
         }
 
         debug {
-            // Debug verwendet automatisch Debug-Signatur
             applicationIdSuffix ".debug"
             debuggable true
         }
     }
 
-    // Optional: Lint-Optionen
     lintOptions {
         checkReleaseBuilds false
         abortOnError false
