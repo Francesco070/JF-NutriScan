@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK (Improved)
 
 on:
   push:
@@ -61,6 +61,7 @@ jobs:
       - name: 🤖 Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      # WICHTIG: SDK Build Tools explizit installieren
       - name: 📦 Install Android Build Tools
         run: |
           echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;${{ env.ANDROID_BUILD_TOOLS_VERSION }}"
@@ -251,6 +252,19 @@ jobs:
           echo ""
           echo "=== APK Certificate Info ==="
           keytool -printcert -jarfile "$APK_PATH" | head -30
+          
+          echo ""
+          echo "=== Überprüfe Package ID ==="
+          PACKAGE_ID=$($ANDROID_HOME/build-tools/${{ env.ANDROID_BUILD_TOOLS_VERSION }}/aapt dump badging "$APK_PATH" | grep "package:" | sed "s/.*name='\([^']*\)'.*/\1/")
+          echo "Package ID: $PACKAGE_ID"
+          
+          if [ "$PACKAGE_ID" != "com.jf.nutriscan" ]; then
+            echo "⚠️ WARNUNG: Package ID stimmt nicht überein!"
+            echo "   Erwartet: com.jf.nutriscan"
+            echo "   Gefunden: $PACKAGE_ID"
+          else
+            echo "✅ Package ID korrekt!"
+          fi
 
       - name: 📦 Check APK Alignment
         working-directory: ./frontend/android
