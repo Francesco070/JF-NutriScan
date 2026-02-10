@@ -22,6 +22,11 @@ on:
           - development
           - staging
           - production
+      create_release:
+        description: 'Create GitHub Release'
+        required: false
+        default: false
+        type: boolean
 
 env:
   NODE_VERSION: '20'
@@ -34,11 +39,14 @@ jobs:
     name: Build Android APK
     runs-on: ubuntu-latest
 
+    outputs:
+      apk-path: ${{ steps.apk-info.outputs.apk-path }}
+      version: ${{ steps.apk-info.outputs.version }}
+      build-number: ${{ steps.apk-info.outputs.build-number }}
+
     strategy:
       matrix:
-        # Falls du mehrere Varianten brauchst
         build_type: [release]
-        # build_type: [debug, release]
 
     steps:
       - name: 📥 Checkout Repository
@@ -70,7 +78,6 @@ jobs:
       - name: 🔐 Create Environment File
         working-directory: ./frontend
         run: |
-          # Bestimme welche Umgebung verwendet wird
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             BUILD_ENV="${{ github.event.inputs.environment }}"
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]] || [[ "${{ github.ref }}" == refs/tags/v* ]]; then
@@ -84,7 +91,6 @@ jobs:
           echo "Building for environment: $BUILD_ENV"
           echo "BUILD_ENV=$BUILD_ENV" >> $GITHUB_ENV
           
-          # Erstelle .env.production File
           cat > .env.production << EOF
           VITE_APP_NAME=NutriScan
           VITE_APP_VERSION=${{ github.ref_name }}
@@ -99,40 +105,28 @@ jobs:
           EOF
           
           echo "✅ Environment file created for $BUILD_ENV"
-          cat .env.production
 
       - name: 🏗️ Build Vue.js App
         working-directory: ./frontend
-        run: |
-          echo "Building Vue.js application..."
-          npm run build
-          
-          # Zeige Build-Info
-          echo "Build completed!"
-          ls -lah dist/
+        run: npm run build
 
       - name: 📱 Setup Capacitor
         working-directory: ./frontend
         run: |
-          # Installiere Capacitor falls noch nicht vorhanden
           if [ ! -d "node_modules/@capacitor/cli" ]; then
             npm install @capacitor/core @capacitor/cli @capacitor/android
           fi
-          
-          # Sync mit Android
           npx cap sync android
 
       - name: 📝 Update Android Version
         working-directory: ./frontend/android/app
         run: |
-          # Extrahiere Version aus package.json
           VERSION_NAME=$(node -p "require('../../package.json').version")
           VERSION_CODE=${{ github.run_number }}
           
           echo "Version Name: $VERSION_NAME"
           echo "Version Code: $VERSION_CODE"
           
-          # Update build.gradle
           sed -i "s/versionCode .*/versionCode $VERSION_CODE/" build.gradle
           sed -i "s/versionName .*/versionName \"$VERSION_NAME\"/" build.gradle
 
@@ -140,10 +134,8 @@ jobs:
         if: matrix.build_type == 'release'
         working-directory: ./frontend/android
         run: |
-          # Erstelle keystore aus Secret
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
           
-          # Erstelle key.properties
           cat > key.properties << EOF
           storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
@@ -161,27 +153,32 @@ jobs:
           fi
 
       - name: 📦 Prepare APK Artifacts
+        id: apk-info
         run: |
-          # Erstelle output Ordner
           mkdir -p apk-output
           
-          # Kopiere APKs
+          VERSION_NAME=$(node -p "require('./frontend/package.json').version")
+          
           if [[ "${{ matrix.build_type }}" == "release" ]]; then
             cp frontend/android/app/build/outputs/apk/release/*.apk apk-output/
-          
-            # Rename für bessere Identifikation
             cd apk-output
             for file in *.apk; do
-              mv "$file" "nutriscan-${BUILD_ENV}-v${{ github.run_number }}-release.apk"
+              NEW_NAME="NutriScan-${BUILD_ENV}-v${VERSION_NAME}-build${{ github.run_number }}.apk"
+              mv "$file" "$NEW_NAME"
+              echo "apk-path=$NEW_NAME" >> $GITHUB_OUTPUT
             done
           else
             cp frontend/android/app/build/outputs/apk/debug/*.apk apk-output/
-          
             cd apk-output
             for file in *.apk; do
-              mv "$file" "nutriscan-${BUILD_ENV}-v${{ github.run_number }}-debug.apk"
+              NEW_NAME="NutriScan-${BUILD_ENV}-v${VERSION_NAME}-build${{ github.run_number }}-debug.apk"
+              mv "$file" "$NEW_NAME"
+              echo "apk-path=$NEW_NAME" >> $GITHUB_OUTPUT
             done
           fi
+          
+          echo "version=${VERSION_NAME}" >> $GITHUB_OUTPUT
+          echo "build-number=${{ github.run_number }}" >> $GITHUB_OUTPUT
           
           cd ..
           ls -lah apk-output/
@@ -192,7 +189,7 @@ jobs:
           Build Information
           ==================
           App: NutriScan
-          Version: ${{ github.ref_name }}
+          Version: ${{ steps.apk-info.outputs.version }}
           Build Number: ${{ github.run_number }}
           Environment: ${BUILD_ENV}
           Build Type: ${{ matrix.build_type }}
@@ -200,10 +197,22 @@ jobs:
           Git Branch: ${{ github.ref_name }}
           Build Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
           Workflow: ${{ github.workflow }}
-          Runner: ${{ runner.os }} ${{ runner.arch }}
-          EOF
           
-          cat apk-output/build-info.txt
+          Installation
+          ============
+          1. Download the APK file
+          2. Transfer to your Android device
+          3. Enable "Install from Unknown Sources"
+          4. Install the APK
+          
+          API Configuration
+          ================
+          Default API URL: ${{ secrets.API_BASE_URL_PRODUCTION || 'Not configured' }}
+          
+          ---
+          Built with GitHub Actions
+          Workflow Run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EOF
 
       - name: 📤 Upload APK Artifact
         uses: actions/upload-artifact@v4
@@ -212,82 +221,7 @@ jobs:
           path: |
             apk-output/*.apk
             apk-output/build-info.txt
-          retention-days: 30
-
-      - name: 📝 Create Release Notes
-        if: startsWith(github.ref, 'refs/tags/v')
-        id: release_notes
-        run: |
-          cat > release-notes.md << EOF
-          ## NutriScan Android APK
-          
-          ### Build Information
-          - **Version**: ${{ github.ref_name }}
-          - **Build**: #${{ github.run_number }}
-          - **Environment**: ${BUILD_ENV}
-          - **Commit**: ${{ github.sha }}
-          - **Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-          
-          ### Downloads
-          - Release APK: nutriscan-${BUILD_ENV}-v${{ github.run_number }}-release.apk
-          
-          ### Installation
-          1. Download the APK file
-          2. Enable "Install from Unknown Sources" on your Android device
-          3. Install the APK
-          4. Configure API URL in settings if needed
-          
-          ### API Configuration
-          - Default API URL: ${{ secrets.API_BASE_URL_PRODUCTION }}
-          
-          ---
-          Built with GitHub Actions
-          EOF
-          
-          cat release-notes.md
-
-      - name: 🚀 Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v') && matrix.build_type == 'release'
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            apk-output/*.apk
-            apk-output/build-info.txt
-          body_path: release-notes.md
-          draft: false
-          prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 💬 Add PR Comment with Download Link
-        if: github.event_name == 'pull_request' && matrix.build_type == 'debug'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const comment = `## 📱 APK Build Successful!
-            
-            **Build Information:**
-            - Version: \`${{ github.ref_name }}\`
-            - Build Number: \`${{ github.run_number }}\`
-            - Commit: \`${{ github.sha }}\`
-            
-            **Download APK:**
-            The APK is available as an artifact in this workflow run.
-            
-            [📥 Download APK Artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            
-            **Installation:**
-            1. Download the artifact
-            2. Extract the ZIP file
-            3. Install the APK on your Android device
-            `;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+          retention-days: 90
 
       - name: 🧹 Cleanup Secrets
         if: always()
@@ -296,9 +230,118 @@ jobs:
           rm -f app/release.keystore
           rm -f key.properties
 
+  # NEUER JOB: Automatisches Release erstellen
+  create-release:
+    name: Create GitHub Release
+    needs: build-apk
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true') ||
+      startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📥 Download APK Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nutriscan-apk-release-${{ github.run_number }}
+          path: ./release-files
+
+      - name: 📝 Generate Release Tag
+        id: tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            TAG_NAME="${{ github.ref_name }}"
+          else
+            VERSION=$(node -p "require('./frontend/package.json').version")
+            TAG_NAME="v${VERSION}-build${{ github.run_number }}"
+          fi
+          
+          echo "tag-name=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "Release will be created with tag: ${TAG_NAME}"
+
+      - name: 📝 Create Release Notes
+        id: release_notes
+        run: |
+          cat > release-notes.md << 'EOF'
+          ## 📱 NutriScan Android APK
+          
+          ### 📦 Download
+          
+          **APK File:** `${{ needs.build-apk.outputs.apk-path }}`
+          
+          ### 📊 Build Information
+          
+          - **Version:** ${{ needs.build-apk.outputs.version }}
+          - **Build Number:** ${{ needs.build-apk.outputs.build-number }}
+          - **Environment:** Production
+          - **Commit:** `${{ github.sha }}`
+          - **Branch:** `${{ github.ref_name }}`
+          - **Build Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          ### 📲 Installation
+          
+          1. **Download** the APK file below
+          2. **Transfer** to your Android device
+          3. **Enable** "Install from Unknown Sources" in Settings
+          4. **Tap** on the APK file to install
+          5. **Launch** NutriScan!
+          
+          ### ⚙️ Configuration
+          
+          - Default API URL is pre-configured
+          - No additional setup required
+          - All features enabled
+          
+          ### 🔒 Security
+          
+          - Signed with official release keystore
+          - Built via GitHub Actions
+          - Source code: ${{ github.server_url }}/${{ github.repository }}
+          
+          ### 📝 Changelog
+          
+          See commit history for detailed changes.
+          
+          ---
+          
+          **Built automatically by GitHub Actions**  
+          Workflow: [${{ github.workflow }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          EOF
+          
+          cat release-notes.md
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag-name }}
+          name: NutriScan ${{ steps.tag.outputs.tag-name }}
+          body_path: release-notes.md
+          draft: false
+          prerelease: ${{ contains(steps.tag.outputs.tag-name, 'beta') || contains(steps.tag.outputs.tag-name, 'alpha') || contains(steps.tag.outputs.tag-name, 'build') }}
+          files: |
+            ./release-files/*.apk
+            ./release-files/build-info.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📌 Pin Latest Release (Optional)
+        if: startsWith(github.ref, 'refs/tags/v') && !contains(steps.tag.outputs.tag-name, 'beta') && !contains(steps.tag.outputs.tag-name, 'alpha')
+        run: |
+          echo "✅ This is a stable release: ${{ steps.tag.outputs.tag-name }}"
+          echo "It will appear as the 'Latest' release on GitHub"
+
   notify:
     name: Send Notifications
-    needs: build-apk
+    needs: [build-apk, create-release]
     runs-on: ubuntu-latest
     if: always()
 
@@ -307,7 +350,13 @@ jobs:
         if: needs.build-apk.result == 'success'
         run: |
           echo "✅ APK Build successful!"
-          echo "Download artifacts from the Actions tab"
+          echo "Version: ${{ needs.build-apk.outputs.version }}"
+          echo "Build: ${{ needs.build-apk.outputs.build-number }}"
+          
+          if [[ "${{ needs.create-release.result }}" == "success" ]]; then
+            echo "✅ GitHub Release created!"
+            echo "Check: https://github.com/${{ github.repository }}/releases"
+          fi
 
       - name: 🚨 Notify Failure
         if: needs.build-apk.result == 'failure'
