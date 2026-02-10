@@ -2,14 +2,21 @@ import type { Context } from 'hono';
 import { z } from 'zod';
 import { authService, EmailAlreadyExistsError } from '../services/auth';
 
-const authSchema = z.object({
+const registerSchema = z.object({
+	firstname: z.string().min(1),
+	lastname: z.string().min(1),
+	email: z.string().email(),
+	password: z.string().min(6),
+});
+
+const loginSchema = z.object({
 	email: z.string().email(),
 	password: z.string().min(6),
 });
 
 export async function register(c: Context) {
 	const body = await c.req.json().catch(() => null);
-	const parsed = authSchema.safeParse(body);
+	const parsed = registerSchema.safeParse(body);
 
 	if (!parsed.success) {
 		return c.json({ error: 'Invalid payload' }, 400);
@@ -17,6 +24,8 @@ export async function register(c: Context) {
 
 	try {
 		const result = await authService.register(
+			parsed.data.firstname,
+			parsed.data.lastname,
 			parsed.data.email,
 			parsed.data.password,
 		);
@@ -31,7 +40,7 @@ export async function register(c: Context) {
 
 export async function login(c: Context) {
 	const body = await c.req.json().catch(() => null);
-	const parsed = authSchema.safeParse(body);
+	const parsed = loginSchema.safeParse(body);
 
 	if (!parsed.success) {
 		return c.json({ error: 'Invalid payload' }, 400);

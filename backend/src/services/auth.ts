@@ -1,6 +1,5 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { randomUUID } from 'node:crypto';
 import { sql } from '../db/connection';
 import { getJwtSecret } from '../utils/jwt';
 
@@ -12,15 +11,22 @@ export class EmailAlreadyExistsError extends Error {
 }
 
 class AuthService {
-	public async register(email: string, password: string) {
+	public async register(
+		firstname: string,
+		lastname: string,
+		email: string,
+		password: string,
+	) {
 		const passwordHash = await bcrypt.hash(password, 10);
-		const userId = randomUUID();
 
 		try {
-			await sql`
-				INSERT INTO users (id, email, password_hash)
-				VALUES (${userId}, ${email}, ${passwordHash})
-			`;
+			const rows = await sql<
+				{ user_id: number }[]
+			>`INSERT INTO account (firstname, lastname, email, password)
+			  VALUES (${firstname}, ${lastname}, ${email}, ${passwordHash})
+			  RETURNING user_id`;
+			const userId = rows[0]?.user_id;
+			return { userId: userId ? String(userId) : null };
 		} catch (error) {
 			const err = error as { code?: string };
 			if (err.code === '23505') {
@@ -28,30 +34,29 @@ class AuthService {
 			}
 			throw error;
 		}
-
-		return { userId };
 	}
 
 	public async login(email: string, password: string) {
 		const rows = await sql<
-			{ id: string; password_hash: string }[]
-		>`SELECT id, password_hash FROM users WHERE email = ${email} LIMIT 1`;
+			{ user_id: number; password: string }[]
+		>`SELECT user_id, password FROM account WHERE email = ${email} LIMIT 1`;
 
 		const user = rows[0];
 		if (!user) {
 			return null;
 		}
 
-		const isValid = await bcrypt.compare(password, user.password_hash);
+		const isValid = await bcrypt.compare(password, user.password);
 		if (!isValid) {
 			return null;
 		}
 
-		const token = jwt.sign({ userId: user.id }, getJwtSecret(), {
+		const userId = String(user.user_id);
+		const token = jwt.sign({ userId }, getJwtSecret(), {
 			expiresIn: '1h',
 		});
 
-		return { token, userId: user.id };
+		return { token, userId };
 	}
 }
 
