@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.nutriscan.app',
+  appId: 'com.jf.nutriscan',
   appName: 'NutriScan',
   webDir: 'dist',
   server: {
