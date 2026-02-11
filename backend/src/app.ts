@@ -11,11 +11,8 @@ export function createApp() {
 	app.use(
 		'*',
 		cors({
-			origin: process.env.ALLOWED_ORIGINS?.split(',') ?? [
-				'http://localhost:5173',
-			],
-			credentials: true,
-		}),
+			origin: '*',
+		})
 	);
 
 	app.get('/health', (c) => {
