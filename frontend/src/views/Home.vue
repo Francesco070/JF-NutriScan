@@ -9,7 +9,7 @@
               <v-icon color="primary" size="32" class="mr-2">mdi-nutrition</v-icon>
               <h2 class="text-h5 font-weight-bold">NutriScan</h2>
             </div>
-            <h1 class="text-h4 font-weight-bold mb-1">Hi, Sarah 👋 {{ apiBaseUrl }}</h1>
+            <h1 class="text-h4 font-weight-bold mb-1">halooooo, Sarah 👋 {{ apiBaseUrl }}</h1>
             <p class="text-body-2 text-medium-emphasis">Keep up the great habits!</p>
           </div>
           <v-btn icon variant="text">
