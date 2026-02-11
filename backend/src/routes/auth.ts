@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { getProfile, login, register } from '../controllers/auth';
+import { getProfile, getStats, login, register } from '../controllers/auth';
 import { authMiddleware } from '../middleware/auth';
 
 export const authRoutes = new Hono();
@@ -10,3 +10,4 @@ authRoutes.post('/login', login);
 
 // Protected endpoint (JWT required)
 authRoutes.get('/me', authMiddleware, getProfile);
+authRoutes.get('/stats', authMiddleware, getStats);
