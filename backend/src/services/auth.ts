@@ -1,7 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { Prisma } from '@prisma/client';
-import { prisma } from '../db/prisma';
+import { prisma, Prisma } from '../db/prisma';
 import { getJwtSecret } from '../utils/jwt';
 
 export class EmailAlreadyExistsError extends Error {

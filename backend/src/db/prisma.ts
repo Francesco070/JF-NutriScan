@@ -1,15 +1,14 @@
-// @ts-ignore
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client';
 
 // Erstelle PrismaClient-Instanz
 const prisma = new PrismaClient({
 	log: ['query', 'info', 'warn', 'error'],
-})
+});
 
-// Export
-export default prisma
+// Named exports (wichtig!)
+export { prisma, Prisma };
 
 // Optional: Graceful Shutdown
 process.on('beforeExit', async () => {
-	await prisma.$disconnect()
-})
+	await prisma.$disconnect();
+});
