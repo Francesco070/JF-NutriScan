@@ -16,5 +16,67 @@ model Account {
   password   String  @db.Text
   profileImg Bytes?  @map("profileimg")
 
+  scannedProducts ScannedProduct[]
+  favorites       Favorite[]
+
   @@map("account")
+}
+
+model Product {
+  productId          BigInt   @id @default(autoincrement()) @map("product_id")
+  name               String?  @db.VarChar(255)
+  barcode            String   @unique @db.VarChar(32)
+  brand              String?  @db.VarChar(255)
+  imageUrl           String?  @db.Text
+  imageIngredientsUrl String? @db.Text
+  imageNutritionUrl  String?  @db.Text
+  ingredients        String?  @db.Text
+  allergens          String?  @db.Text
+  nutriscoreGrade    String?  @map("nutriscore_grade") @db.Char(1)
+  nutriscoreScore    Int?     @map("nutriscore_score")
+  servingSize        String?  @map("serving_size") @db.VarChar(50)
+  servingQuantity    Float?   @map("serving_quantity")
+  servingUnitBasis   String?  @map("serving_unitBasis") @db.VarChar(20)
+  energyKj100g       Int?     @map("energyKj100g")
+  energyKcal100g     Int?     @map("energyKcal100g")
+  energyKcalServing  Int?     @map("energyKcalServing")
+  proteins100g       Float?   @map("proteins100g")
+  carbs100g          Float?   @map("carbs100g")
+  fat100g            Float?   @map("fat100g")
+  saturatedFat100g   Float?   @map("saturatedFat100g")
+  sugars100g         Float?   @map("sugars100g")
+  fiber100g          Float?   @map("fiber100g")
+  salt100g           Float?   @map("salt100g")
+  sodium100g         Float?   @map("sodium100g")
+
+  scannedBy ScannedProduct[]
+  favoritedBy Favorite[]
+
+  @@map("product")
+}
+
+model ScannedProduct {
+  scannedProductId BigInt   @id @default(autoincrement()) @map("scanned_product_id")
+  userId           BigInt   @map("user_id")
+  productId        BigInt   @map("product_id")
+  scanDate         DateTime @default(now()) @map("scanDate") @db.Timestamptz(6)
+
+  user    Account @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [productId], onDelete: Cascade)
+
+  @@index([userId], map: "idx_scanned_product_user_id")
+  @@index([productId], map: "idx_scanned_product_product_id")
+  @@map("scanned_product")
+}
+
+model Favorite {
+  userId    BigInt @map("user_id")
+  productId BigInt @map("product_id")
+
+  user    Account @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [productId], onDelete: Cascade)
+
+  @@id([userId, productId])
+  @@index([productId], map: "idx_favorites_product_id")
+  @@map("favorites")
 }
