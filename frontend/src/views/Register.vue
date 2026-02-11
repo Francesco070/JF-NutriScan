@@ -18,7 +18,7 @@
             <v-form @submit.prevent="handleRegister">
               <!-- First Name Field -->
               <v-text-field
-                  v-model="firstName"
+                  v-model="firstname"
                   label="Vorname"
                   type="text"
                   prepend-inner-icon="mdi-account-outline"
@@ -32,7 +32,7 @@
 
               <!-- Last Name Field -->
               <v-text-field
-                  v-model="lastName"
+                  v-model="lastname"
                   label="Nachname"
                   type="text"
                   prepend-inner-icon="mdi-account-outline"
@@ -153,8 +153,8 @@ import { useAuthStore } from '@/stores/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const firstName = ref('')
-const lastName = ref('')
+const firstname = ref('')
+const lastname = ref('')
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
@@ -204,29 +204,29 @@ const handleRegister = async () => {
   confirmPasswordError.value = ''
 
   // Validate First Name
-  if (!firstName.value) {
+  if (!firstname.value) {
     firstNameError.value = 'Vorname ist erforderlich'
     return
   }
-  if (firstName.value.length < 2) {
+  if (firstname.value.length < 2) {
     firstNameError.value = 'Vorname muss mindestens 2 Zeichen lang sein'
     return
   }
-  if (!/^[a-zA-ZäöüÄÖÜß\s-]+$/.test(firstName.value)) {
+  if (!/^[a-zA-ZäöüÄÖÜß\s-]+$/.test(firstname.value)) {
     firstNameError.value = 'Vorname darf nur Buchstaben enthalten'
     return
   }
 
   // Validate Last Name
-  if (!lastName.value) {
+  if (!lastname.value) {
     lastNameError.value = 'Nachname ist erforderlich'
     return
   }
-  if (lastName.value.length < 2) {
+  if (lastname.value.length < 2) {
     lastNameError.value = 'Nachname muss mindestens 2 Zeichen lang sein'
     return
   }
-  if (!/^[a-zA-ZäöüÄÖÜß\s-]+$/.test(lastName.value)) {
+  if (!/^[a-zA-ZäöüÄÖÜß\s-]+$/.test(lastname.value)) {
     lastNameError.value = 'Nachname darf nur Buchstaben enthalten'
     return
   }
@@ -263,8 +263,8 @@ const handleRegister = async () => {
 
   // Register
   const success = await authStore.register(
-      firstName.value,
-      lastName.value,
+      firstname.value,
+      lastname.value,
       email.value,
       password.value
   )

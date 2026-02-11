@@ -4,7 +4,7 @@ import {ref} from 'vue'
 import {authAPI, getAuthToken, removeAuthToken, setAuthToken} from '@/services/api'
 
 export const useAuthStore = defineStore('auth', () => {
-    const user = ref<{ userId: string; email?: string; firstName?: string; lastName?: string } | null>(null)
+    const user = ref<{ userId: string; email?: string; firstname?: string; lastname?: string } | null>(null)
     const isAuthenticated = ref(false)
     const isLoading = ref(false)
     const error = ref<string | null>(null)
@@ -35,8 +35,8 @@ export const useAuthStore = defineStore('auth', () => {
             user.value = {
                 userId: response.userId,
                 email: response.email,
-                firstName: response.firstName,
-                lastName: response.lastName
+                firstname: response.firstname,
+                lastname: response.lastname
             }
             isAuthenticated.value = true
             return true
@@ -50,8 +50,8 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     const register = async (
-        firstName: string,
-        lastName: string,
+        firstname: string,
+        lastname: string,
         email: string,
         password: string
     ) => {
@@ -59,8 +59,8 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = null
 
         try {
-            console.log('📝 Registering:', { firstName, lastName, email })
-            await authAPI.register(firstName, lastName, email, password)
+            console.log('📝 Registering:', { firstname: firstname, lastname: lastname, email })
+            await authAPI.register(firstname, lastname, email, password)
 
             console.log('✅ Registration successful, logging in...')
 

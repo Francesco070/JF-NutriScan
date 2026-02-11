@@ -68,14 +68,14 @@ async function apiCall<T>(
 // Auth API
 export const authAPI = {
     register: async (
-        firstName: string,
-        lastName: string,
+        firstname: string,
+        lastname: string,
         email: string,
         password: string
     ) => {
         return apiCall<{ userId: string }>('/auth/register', {
             method: 'POST',
-            body: JSON.stringify({ firstName, lastName, email, password }),
+            body: JSON.stringify({ firstname: firstname, lastname: lastname, email, password }),
         })
     },
 
@@ -84,8 +84,8 @@ export const authAPI = {
             token: string
             userId: string
             email: string
-            firstName?: string
-            lastName?: string
+            firstname?: string
+            lastname?: string
         }>('/auth/login', {
             method: 'POST',
             body: JSON.stringify({ email, password }),
@@ -96,8 +96,8 @@ export const authAPI = {
         return apiCall<{
             userId: string
             email: string
-            firstName?: string
-            lastName?: string
+            firstname?: string
+            lastname?: string
         }>('/auth/me', {
             method: 'GET',
         })
