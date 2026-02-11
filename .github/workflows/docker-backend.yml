@@ -183,44 +183,44 @@ jobs:
           ## Quick Start
           
           ### 1. Pull Image
-  ```bash
-  docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-  ```
-  
-  ### 2. Setup Environment
-  ```bash
-  cp .env.example .env
-  nano .env  # Edit with your values
-  ```
-  
-  ### 3. Deploy
-  ```bash
-  ./deploy.sh
-  ```
-  
-  ## Database Schema
-  
-  The application automatically syncs the database schema on startup using `prisma db push`.
-  
-  ## Verify Tables
-  ```bash
-  docker-compose -f docker-compose.prod.yml exec db psql -U nutriscan_user -d nutriscan -c "\dt"
-  ```
-  
-  You should see the `account` table.
-  EOF
+          ```bash
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          ```
+          
+          ### 2. Setup Environment
+          ```bash
+          cp .env.example .env
+          nano .env  # Edit with your values
+          ```
+          
+          ### 3. Deploy
+          ```bash
+          ./deploy.sh
+          ```
+          
+          ## Database Schema
+          
+          The application automatically syncs the database schema on startup using `prisma db push`.
+          
+          ## Verify Tables
+          ```bash
+          docker-compose -f docker-compose.prod.yml exec db psql -U nutriscan_user -d nutriscan -c "\dt"
+          ```
+          
+          You should see the `account` table.
+          EOF
 
-- name: 📤 Upload Deployment Files
-  uses: actions/upload-artifact@v4
-  with:
-    name: deployment-files-${{ github.run_number }}
-    path: deployment-files/
-    retention-days: 90
+      - name: 📤 Upload Deployment Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-files-${{ github.run_number }}
+          path: deployment-files/
+          retention-days: 90
 
-- name: ✅ Build Complete
-  run: |
-    echo "🎉 Production Docker image built and pushed!"
-    echo ""
-    echo "📦 Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
-    echo ""
-    echo "ℹ️  Database schema will be automatically synced on container startup"
+      - name: ✅ Build Complete
+        run: |
+          echo "🎉 Production Docker image built and pushed!"
+          echo ""
+          echo "📦 Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo ""
+          echo "ℹ️  Database schema will be automatically synced on container startup"
