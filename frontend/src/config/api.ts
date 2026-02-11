@@ -10,7 +10,7 @@ export const getApiBaseUrl = (): string => {
 
     // Lokale Entwicklung
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return 'http://localhost:3000/api'
+        return 'http://172.29.3.172:3000/api'
     }
 
     // Production (gleiche Domain wie Frontend)
