@@ -52,6 +52,7 @@ jobs:
         with:
           context: ./backend
           file: ./backend/Dockerfile
+          target: production
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -62,25 +63,7 @@ jobs:
             VCS_REF=${{ github.sha }}
             VERSION=${{ github.ref_name }}
 
-      - name: 📊 Image Info
-        run: |
-          echo "======================================"
-          echo "     Docker Image Build Summary"
-          echo "======================================"
-          echo ""
-          echo "✅ Image successfully built and pushed!"
-          echo ""
-          echo "📦 Registry: ${{ env.REGISTRY }}"
-          echo "🏷️  Image: ${{ env.IMAGE_NAME }}"
-          echo "📝 Tags:"
-          echo "${{ steps.meta.outputs.tags }}" | sed 's/^/   - /'
-          echo ""
-          echo "🔗 Pull Command:"
-          echo "   docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
-          echo ""
-          echo "======================================"
-
-      - name: 📝 Create Deployment File
+      - name: 📝 Create Deployment Files
         run: |
           mkdir -p deployment-files
           
@@ -104,6 +87,7 @@ jobs:
                 db:
                   condition: service_healthy
               restart: unless-stopped
+              command: sh -c "npx prisma db push && npm start"
           
             db:
               image: postgres:16-alpine
@@ -152,13 +136,12 @@ jobs:
           echo "======================================"
           echo ""
           
-          # Check if .env exists
           if [ ! -f ".env" ]; then
             echo "❌ Error: .env file not found!"
             echo ""
             echo "Please create .env file from .env.example:"
             echo "  cp .env.example .env"
-            echo "  nano .env  # Edit with your values"
+            echo "  nano .env"
             exit 1
           fi
           
@@ -174,23 +157,22 @@ jobs:
           docker-compose -f docker-compose.prod.yml up -d
           
           echo ""
-          echo "⏳ Waiting for services to be ready..."
-          sleep 10
+          echo "⏳ Waiting for database schema sync..."
+          sleep 15
           
           echo ""
           echo "📊 Container Status:"
           docker-compose -f docker-compose.prod.yml ps
           
           echo ""
+          echo "🔍 Checking database tables..."
+          docker-compose -f docker-compose.prod.yml exec -T db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c "\dt"
+          
+          echo ""
           echo "✅ Deployment complete!"
           echo ""
           echo "🔗 Backend URL: http://localhost:3000"
           echo "📊 Health Check: http://localhost:3000/health"
-          echo ""
-          echo "View logs:"
-          echo "  docker-compose -f docker-compose.prod.yml logs -f"
-          echo ""
-          echo "======================================"
           EOF
           
           chmod +x deployment-files/deploy.sh
@@ -198,132 +180,47 @@ jobs:
           cat > deployment-files/README.md << 'EOF'
           # NutriScan Backend Deployment
           
-          ## Docker Image
-          
-          **Registry:** `${{ env.REGISTRY }}`  
-          **Image:** `${{ env.IMAGE_NAME }}`  
-          **Tag:** `latest`
-          
           ## Quick Start
           
           ### 1. Pull Image
-          ```bash
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          ```
-          
-          ### 2. Setup Environment
-          ```bash
-          cp .env.example .env
-          nano .env  # Edit with your values
-          ```
-          
-          ### 3. Deploy
-          ```bash
-          ./deploy.sh
-          ```
-          
-          ## Manual Deployment
-          
-          ```bash
-          # Pull latest image
-          docker-compose -f docker-compose.prod.yml pull
-          
-          # Start services
-          docker-compose -f docker-compose.prod.yml up -d
-          
-          # Check status
-          docker-compose -f docker-compose.prod.yml ps
-          
-          # View logs
-          docker-compose -f docker-compose.prod.yml logs -f backend
-          ```
-          
-          ## Environment Variables
-          
-          Required variables in `.env`:
-          
-          ```env
-          DATABASE_URL=postgresql://user:pass@db:5432/nutriscan
-          POSTGRES_USER=nutriscan_user
-          POSTGRES_PASSWORD=secure_password
-          POSTGRES_DB=nutriscan
-          JWT_SECRET=your_jwt_secret
-          ALLOWED_ORIGINS=https://yourdomain.com
-          ```
-          
-          ## Health Check
-          
-          ```bash
-          curl http://localhost:3000/health
-          ```
-          
-          ## Troubleshooting
-          
-          ### View Logs
-          ```bash
-          docker-compose -f docker-compose.prod.yml logs -f backend
-          ```
-          
-          ### Restart Services
-          ```bash
-          docker-compose -f docker-compose.prod.yml restart backend
-          ```
-          
-          ### Database Migration
-          ```bash
-          docker-compose -f docker-compose.prod.yml exec backend npx prisma migrate deploy
-          ```
-          
-          ### Access Database
-          ```bash
-          docker-compose -f docker-compose.prod.yml exec db psql -U nutriscan_user -d nutriscan
-          ```
-          
-          ## Updates
-          
-          To update to the latest version:
-          
-          ```bash
-          ./deploy.sh
-          ```
-          
-          Or manually:
-          
-          ```bash
-          docker-compose -f docker-compose.prod.yml pull
-          docker-compose -f docker-compose.prod.yml up -d
-          ```
-          
-          ## Backup Database
-          
-          ```bash
-          docker-compose -f docker-compose.prod.yml exec db pg_dump -U nutriscan_user nutriscan > backup.sql
-          ```
-          
-          ## Restore Database
-          
-          ```bash
-          docker-compose -f docker-compose.prod.yml exec -T db psql -U nutriscan_user nutriscan < backup.sql
-          ```
-          EOF
+  ```bash
+  docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+  ```
+  
+  ### 2. Setup Environment
+  ```bash
+  cp .env.example .env
+  nano .env  # Edit with your values
+  ```
+  
+  ### 3. Deploy
+  ```bash
+  ./deploy.sh
+  ```
+  
+  ## Database Schema
+  
+  The application automatically syncs the database schema on startup using `prisma db push`.
+  
+  ## Verify Tables
+  ```bash
+  docker-compose -f docker-compose.prod.yml exec db psql -U nutriscan_user -d nutriscan -c "\dt"
+  ```
+  
+  You should see the `account` table.
+  EOF
 
-      - name: 📤 Upload Deployment Files
-        uses: actions/upload-artifact@v4
-        with:
-          name: deployment-files-${{ github.run_number }}
-          path: deployment-files/
-          retention-days: 90
+- name: 📤 Upload Deployment Files
+  uses: actions/upload-artifact@v4
+  with:
+    name: deployment-files-${{ github.run_number }}
+    path: deployment-files/
+    retention-days: 90
 
-      - name: ✅ Build Complete
-        run: |
-          echo ""
-          echo "🎉 Docker image successfully built and pushed!"
-          echo ""
-          echo "📦 Available tags:"
-          echo "${{ steps.meta.outputs.tags }}" | sed 's/^/   - /'
-          echo ""
-          echo "🚀 Pull and run:"
-          echo "   docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
-          echo "   docker run -p 3000:3000 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
-          echo ""
-          echo "📥 Deployment files available as artifact!"
+- name: ✅ Build Complete
+  run: |
+    echo "🎉 Production Docker image built and pushed!"
+    echo ""
+    echo "📦 Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+    echo ""
+    echo "ℹ️  Database schema will be automatically synced on container startup"

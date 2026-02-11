@@ -1,19 +1,41 @@
 services:
   backend:
-    build: .
-    network_mode: "host"
+    build:
+      context: .
+      target: development
+    ports:
+      - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://jf:JF-NutriScan123@localhost:5432/nutriscan
+      - DATABASE_URL=postgresql://jf:JF-NutriScan123@db:5432/nutriscan
       - PORT=3000
       - NODE_ENV=development
       - JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
       - JWT_EXPIRES_IN=7d
       - OPEN_FOOD_FACTS_URL=https://world.openfoodfacts.net
       - ALLOWED_ORIGINS=http://localhost:5173,http://localhost:4173
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
       - ./src:/app/src
       - ./prisma:/app/prisma
-    command: sh -c "npx prisma db push --skip-generate --accept-data-loss && npm run dev"
+    command: sh -c "npx prisma db push --accept-data-loss && npm run dev"
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=jf
+      - POSTGRES_PASSWORD=JF-NutriScan123
+      - POSTGRES_DB=nutriscan
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jf -d nutriscan"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

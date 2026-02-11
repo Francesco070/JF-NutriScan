@@ -23,6 +23,10 @@ export default createVuetify({
             rounded: 'xl',
         },
 
+        VAlert: {
+            rounded: 'xl',
+        },
+
         VImg: {
             rounded: 'xl',
         },
