@@ -1,0 +1,329 @@
+name: Build and Push Backend Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/docker-backend.yml'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/backend
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔐 Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏷️ Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: 🏗️ Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🐳 Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ github.ref_name }}
+
+      - name: 📊 Image Info
+        run: |
+          echo "======================================"
+          echo "     Docker Image Build Summary"
+          echo "======================================"
+          echo ""
+          echo "✅ Image successfully built and pushed!"
+          echo ""
+          echo "📦 Registry: ${{ env.REGISTRY }}"
+          echo "🏷️  Image: ${{ env.IMAGE_NAME }}"
+          echo "📝 Tags:"
+          echo "${{ steps.meta.outputs.tags }}" | sed 's/^/   - /'
+          echo ""
+          echo "🔗 Pull Command:"
+          echo "   docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo ""
+          echo "======================================"
+
+      - name: 📝 Create Deployment File
+        run: |
+          mkdir -p deployment-files
+          
+          cat > deployment-files/docker-compose.prod.yml << 'EOF'
+          version: '3.8'
+          
+          services:
+            backend:
+              image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+              ports:
+                - "3000:3000"
+              environment:
+                - DATABASE_URL=${DATABASE_URL}
+                - PORT=3000
+                - NODE_ENV=production
+                - JWT_SECRET=${JWT_SECRET}
+                - JWT_EXPIRES_IN=7d
+                - OPEN_FOOD_FACTS_URL=https://world.openfoodfacts.net
+                - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+              depends_on:
+                db:
+                  condition: service_healthy
+              restart: unless-stopped
+          
+            db:
+              image: postgres:16-alpine
+              environment:
+                - POSTGRES_USER=${POSTGRES_USER}
+                - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+                - POSTGRES_DB=${POSTGRES_DB}
+              ports:
+                - "5432:5432"
+              volumes:
+                - postgres_data:/var/lib/postgresql/data
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+              restart: unless-stopped
+          
+          volumes:
+            postgres_data:
+          EOF
+          
+          cat > deployment-files/.env.example << 'EOF'
+          # Database Configuration
+          DATABASE_URL=postgresql://nutriscan_user:your_secure_password@db:5432/nutriscan
+          POSTGRES_USER=nutriscan_user
+          POSTGRES_PASSWORD=your_secure_password
+          POSTGRES_DB=nutriscan
+          
+          # JWT Configuration
+          JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+          JWT_EXPIRES_IN=7d
+          
+          # CORS Configuration
+          ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+          
+          # Open Food Facts API
+          OPEN_FOOD_FACTS_URL=https://world.openfoodfacts.net
+          EOF
+          
+          cat > deployment-files/deploy.sh << 'EOF'
+          #!/bin/bash
+          
+          echo "======================================"
+          echo "  NutriScan Backend Deployment"
+          echo "======================================"
+          echo ""
+          
+          # Check if .env exists
+          if [ ! -f ".env" ]; then
+            echo "❌ Error: .env file not found!"
+            echo ""
+            echo "Please create .env file from .env.example:"
+            echo "  cp .env.example .env"
+            echo "  nano .env  # Edit with your values"
+            exit 1
+          fi
+          
+          echo "📥 Pulling latest image..."
+          docker-compose -f docker-compose.prod.yml pull
+          
+          echo ""
+          echo "🔄 Stopping old containers..."
+          docker-compose -f docker-compose.prod.yml down
+          
+          echo ""
+          echo "🚀 Starting new containers..."
+          docker-compose -f docker-compose.prod.yml up -d
+          
+          echo ""
+          echo "⏳ Waiting for services to be ready..."
+          sleep 10
+          
+          echo ""
+          echo "📊 Container Status:"
+          docker-compose -f docker-compose.prod.yml ps
+          
+          echo ""
+          echo "✅ Deployment complete!"
+          echo ""
+          echo "🔗 Backend URL: http://localhost:3000"
+          echo "📊 Health Check: http://localhost:3000/health"
+          echo ""
+          echo "View logs:"
+          echo "  docker-compose -f docker-compose.prod.yml logs -f"
+          echo ""
+          echo "======================================"
+          EOF
+          
+          chmod +x deployment-files/deploy.sh
+          
+          cat > deployment-files/README.md << 'EOF'
+          # NutriScan Backend Deployment
+          
+          ## Docker Image
+          
+          **Registry:** `${{ env.REGISTRY }}`  
+          **Image:** `${{ env.IMAGE_NAME }}`  
+          **Tag:** `latest`
+          
+          ## Quick Start
+          
+          ### 1. Pull Image
+          ```bash
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          ```
+          
+          ### 2. Setup Environment
+          ```bash
+          cp .env.example .env
+          nano .env  # Edit with your values
+          ```
+          
+          ### 3. Deploy
+          ```bash
+          ./deploy.sh
+          ```
+          
+          ## Manual Deployment
+          
+          ```bash
+          # Pull latest image
+          docker-compose -f docker-compose.prod.yml pull
+          
+          # Start services
+          docker-compose -f docker-compose.prod.yml up -d
+          
+          # Check status
+          docker-compose -f docker-compose.prod.yml ps
+          
+          # View logs
+          docker-compose -f docker-compose.prod.yml logs -f backend
+          ```
+          
+          ## Environment Variables
+          
+          Required variables in `.env`:
+          
+          ```env
+          DATABASE_URL=postgresql://user:pass@db:5432/nutriscan
+          POSTGRES_USER=nutriscan_user
+          POSTGRES_PASSWORD=secure_password
+          POSTGRES_DB=nutriscan
+          JWT_SECRET=your_jwt_secret
+          ALLOWED_ORIGINS=https://yourdomain.com
+          ```
+          
+          ## Health Check
+          
+          ```bash
+          curl http://localhost:3000/health
+          ```
+          
+          ## Troubleshooting
+          
+          ### View Logs
+          ```bash
+          docker-compose -f docker-compose.prod.yml logs -f backend
+          ```
+          
+          ### Restart Services
+          ```bash
+          docker-compose -f docker-compose.prod.yml restart backend
+          ```
+          
+          ### Database Migration
+          ```bash
+          docker-compose -f docker-compose.prod.yml exec backend npx prisma migrate deploy
+          ```
+          
+          ### Access Database
+          ```bash
+          docker-compose -f docker-compose.prod.yml exec db psql -U nutriscan_user -d nutriscan
+          ```
+          
+          ## Updates
+          
+          To update to the latest version:
+          
+          ```bash
+          ./deploy.sh
+          ```
+          
+          Or manually:
+          
+          ```bash
+          docker-compose -f docker-compose.prod.yml pull
+          docker-compose -f docker-compose.prod.yml up -d
+          ```
+          
+          ## Backup Database
+          
+          ```bash
+          docker-compose -f docker-compose.prod.yml exec db pg_dump -U nutriscan_user nutriscan > backup.sql
+          ```
+          
+          ## Restore Database
+          
+          ```bash
+          docker-compose -f docker-compose.prod.yml exec -T db psql -U nutriscan_user nutriscan < backup.sql
+          ```
+          EOF
+
+      - name: 📤 Upload Deployment Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-files-${{ github.run_number }}
+          path: deployment-files/
+          retention-days: 90
+
+      - name: ✅ Build Complete
+        run: |
+          echo ""
+          echo "🎉 Docker image successfully built and pushed!"
+          echo ""
+          echo "📦 Available tags:"
+          echo "${{ steps.meta.outputs.tags }}" | sed 's/^/   - /'
+          echo ""
+          echo "🚀 Pull and run:"
+          echo "   docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo "   docker run -p 3000:3000 ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo ""
+          echo "📥 Deployment files available as artifact!"
