@@ -92,7 +92,7 @@ jobs:
           cat > .env.production << EOF
           VITE_APP_NAME=NutriScan
           VITE_APP_VERSION=${{ github.ref_name }}
-          VITE_API_BASE_URL=http://172.29.3.172:3000/api
+          VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
           VITE_OPEN_FOOD_FACTS_URL=https://world.openfoodfacts.org
           VITE_ENABLE_AUTH=true
           VITE_ENABLE_SYNC=true
