@@ -1,6 +1,4 @@
 // frontend/src/services/api.ts
-// FINALE VERSION - Native Fetch (einfach und zuverlässig)
-
 import { createApiUrl } from '@/config/api'
 
 // Token-Management
@@ -69,22 +67,38 @@ async function apiCall<T>(
 
 // Auth API
 export const authAPI = {
-    register: async (email: string, password: string) => {
+    register: async (
+        firstName: string,
+        lastName: string,
+        email: string,
+        password: string
+    ) => {
         return apiCall<{ userId: string }>('/auth/register', {
             method: 'POST',
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ firstName, lastName, email, password }),
         })
     },
 
     login: async (email: string, password: string) => {
-        return apiCall<{ token: string; userId: string }>('/auth/login', {
+        return apiCall<{
+            token: string
+            userId: string
+            email: string
+            firstName?: string
+            lastName?: string
+        }>('/auth/login', {
             method: 'POST',
             body: JSON.stringify({ email, password }),
         })
     },
 
     getMe: async () => {
-        return apiCall<{ userId: string }>('/auth/me', {
+        return apiCall<{
+            userId: string
+            email: string
+            firstName?: string
+            lastName?: string
+        }>('/auth/me', {
             method: 'GET',
         })
     },
