@@ -33,6 +33,9 @@ RUN npm run build
 
 FROM base AS production
 
+# Add postgresql-client for psql (needed by entrypoint to create the database)
+RUN apk add --no-cache postgresql-client
+
 # Production deps only
 RUN npm ci --only=production && npm cache clean --force
 
@@ -42,6 +45,10 @@ COPY --from=builder /app/dist ./dist
 # Copy generated Prisma client from builder
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
+
+# Copy entrypoint script
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
 
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 && \
@@ -54,4 +61,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
 
-CMD ["npm", "start"]
+CMD ["./docker-entrypoint.sh"]
