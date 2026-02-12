@@ -2,6 +2,6 @@
 set -e
 
 npx prisma generate
-npx prisma db push --accept-data-loss
+npx prisma migrate deploy
 
 exec npm start
