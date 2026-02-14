@@ -1,14 +1,9 @@
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { prisma, Prisma } from '../db/prisma';
-import { getJwtSecret } from '../utils/jwt';
+import { getProfile } from './auth/getProfile';
+import { getStats } from './auth/getStats';
+import { login } from './auth/login';
+import { register } from './auth/register';
 
-export class EmailAlreadyExistsError extends Error {
-	public readonly code = 'EMAIL_EXISTS';
-	constructor() {
-		super('Email already registered');
-	}
-}
+export { EmailAlreadyExistsError } from './auth/errors';
 
 class AuthService {
 	public async register(
@@ -17,216 +12,19 @@ class AuthService {
 		email: string,
 		password: string,
 	) {
-		const passwordHash = await bcrypt.hash(password, 10);
-
-		try {
-			const user = await prisma.account.create({
-				data: {
-					firstname,
-					lastname,
-					email,
-					password: passwordHash,
-				},
-				select: {
-					userId: true,
-				},
-			});
-
-			return { userId: String(user.userId) };
-		} catch (error) {
-			if (
-				error instanceof Prisma.PrismaClientKnownRequestError &&
-				error.code === 'P2002'
-			) {
-				throw new EmailAlreadyExistsError();
-			}
-			throw error;
-		}
+		return register(firstname, lastname, email, password);
 	}
 
 	public async login(email: string, password: string) {
-		const user = await prisma.account.findUnique({
-			where: { email },
-			select: {
-				userId: true,
-				password: true,
-			},
-		});
-
-		if (!user) {
-			return null;
-		}
-
-		const isValid = await bcrypt.compare(password, user.password);
-		if (!isValid) {
-			return null;
-		}
-
-		const userId = String(user.userId);
-		const token = jwt.sign({ userId }, getJwtSecret(), {
-			expiresIn: '1h',
-		});
-
-		return { token, userId };
+		return login(email, password);
 	}
 
 	public async getProfile(userId: string) {
-		let parsedUserId: bigint;
-		try {
-			parsedUserId = BigInt(userId);
-		} catch {
-			return null;
-		}
-
-		const user = await prisma.account.findUnique({
-			where: { userId: parsedUserId },
-			select: {
-				firstname: true,
-				lastname: true,
-				email: true,
-			},
-		});
-
-		if (!user) {
-			return null;
-		}
-
-		return {
-			firstname: user.firstname,
-			lastname: user.lastname,
-			email: user.email,
-		};
+		return getProfile(userId);
 	}
 
 	public async getStats(userId: string) {
-		let parsedUserId: bigint;
-		try {
-			parsedUserId = BigInt(userId);
-		} catch {
-			return null;
-		}
-
-		const exists = await prisma.account.findUnique({
-			where: { userId: parsedUserId },
-			select: { userId: true },
-		});
-		if (!exists) {
-			return null;
-		}
-
-		const [totalScans, totalFavorites] = await Promise.all([
-			prisma.scannedProduct.count({
-				where: { userId: parsedUserId },
-			}),
-			prisma.favorite.count({
-				where: { userId: parsedUserId },
-			}),
-		]);
-
-		const now = new Date();
-		const todayUtc = new Date(
-			Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-		);
-		const startUtc = new Date(todayUtc);
-		startUtc.setUTCDate(startUtc.getUTCDate() - 6);
-		const endExclusiveUtc = new Date(todayUtc);
-		endExclusiveUtc.setUTCDate(endExclusiveUtc.getUTCDate() + 1);
-
-		const trendScans = await prisma.scannedProduct.findMany({
-			where: {
-				userId: parsedUserId,
-				scanDate: {
-					gte: startUtc,
-					lt: endExclusiveUtc,
-				},
-				product: {
-					nutriscoreScore: { not: null },
-				},
-			},
-			select: {
-				scanDate: true,
-				product: {
-					select: {
-						nutriscoreScore: true,
-					},
-				},
-			},
-		});
-
-		const trendBuckets = new Map<string, { sum: number; count: number }>();
-		for (const scan of trendScans) {
-			const score = scan.product.nutriscoreScore;
-			if (score === null) {
-				continue;
-			}
-			const dateKey = scan.scanDate.toISOString().slice(0, 10);
-			const existing = trendBuckets.get(dateKey);
-			if (existing) {
-				existing.sum += score;
-				existing.count += 1;
-			} else {
-				trendBuckets.set(dateKey, { sum: score, count: 1 });
-			}
-		}
-
-		const healthScoreTrend = [] as {
-			date: string;
-			score: number | null;
-		}[];
-		for (let i = 0; i < 7; i += 1) {
-			const day = new Date(startUtc);
-			day.setUTCDate(startUtc.getUTCDate() + i);
-			const dateKey = day.toISOString().slice(0, 10);
-			const bucket = trendBuckets.get(dateKey);
-			healthScoreTrend.push({
-				date: dateKey,
-				score: bucket ? bucket.sum / bucket.count : null,
-			});
-		}
-
-		const distributionScans = await prisma.scannedProduct.findMany({
-			where: {
-				userId: parsedUserId,
-				product: { nutriscoreGrade: { not: null } },
-			},
-			select: {
-				product: {
-					select: {
-						nutriscoreGrade: true,
-					},
-				},
-			},
-		});
-
-		const gradeCounts = new Map<string, number>();
-		for (const scan of distributionScans) {
-			const grade = scan.product.nutriscoreGrade;
-			if (!grade) {
-				continue;
-			}
-			gradeCounts.set(grade, (gradeCounts.get(grade) ?? 0) + 1);
-		}
-
-		const gradeOrder = ['A', 'B', 'C', 'D', 'E'];
-		const totalGraded = Array.from(gradeCounts.values()).reduce(
-			(sum, value) => sum + value,
-			0,
-		);
-
-		const nutriScoreDistribution = gradeOrder.map((grade) => {
-			const count = gradeCounts.get(grade) ?? 0;
-			const percent = totalGraded
-				? Number(((count / totalGraded) * 100).toFixed(1))
-				: 0;
-			return { grade, count, percent };
-		});
-
-		return {
-			totalScans,
-			totalFavorites,
-			healthScoreTrend,
-			nutriScoreDistribution,
-		};
+		return getStats(userId);
 	}
 }
 
