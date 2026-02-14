@@ -1,9 +1,9 @@
-import { getProfile } from './auth/getProfile';
-import { getStats } from './auth/getStats';
-import { login } from './auth/login';
-import { register } from './auth/register';
+import { getProfile } from './getProfile';
+import { getStats } from './getStats';
+import { login } from './login';
+import { register } from './register';
 
-export { EmailAlreadyExistsError } from './auth/errors';
+export { EmailAlreadyExistsError } from './errors';
 
 class AuthService {
 	public async register(

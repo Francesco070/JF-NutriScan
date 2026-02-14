@@ -1,5 +1,5 @@
-import { openFoodFactsClient } from '../../clients/openFoodFacts';
-import type { ProductDto } from '../../models/product';
+import { openFoodFactsClient } from '../clients/openFoodFacts';
+import type { ProductDto } from '../models/product';
 
 class ProductsService {
 	public async getByBarcode(

@@ -1,8 +1,11 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { authRoutes } from './routes/auth';
-import { productsRoutes } from './routes/products';
+import {
+	protectedAuthRoutes,
+	publicAuthRoutes,
+	publicProductsRoutes,
+} from './routes';
 
 export function createApp() {
 	const app = new Hono();
@@ -12,15 +15,16 @@ export function createApp() {
 		'*',
 		cors({
 			origin: '*',
-		})
+		}),
 	);
 
 	app.get('/health', (c) => {
 		return c.json({ status: 'ok', timestamp: new Date().toISOString() });
 	});
 
-	app.route('/api/auth', authRoutes);
-	app.route('/api/products', productsRoutes);
+	app.route('/api/auth', publicAuthRoutes);
+	app.route('/api/auth', protectedAuthRoutes);
+	app.route('/api/products', publicProductsRoutes);
 
 	return app;
 }

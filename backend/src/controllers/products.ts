@@ -1,5 +1,5 @@
 import type { Context } from 'hono';
-import { productsService } from '../services/auth/products';
+import { productsService } from '../services/products';
 
 function isValidBarcode(barcode: string) {
 	return /^\d{8,14}$/.test(barcode);
