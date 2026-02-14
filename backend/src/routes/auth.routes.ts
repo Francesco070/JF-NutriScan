@@ -1,5 +1,11 @@
 import { Hono } from 'hono';
-import { getProfile, getStats, login, register } from '../controllers/auth';
+import {
+	getProfile,
+	getStats,
+	login,
+	postProductController,
+	register,
+} from '../controllers/auth';
 import { authMiddleware } from '../middleware/auth';
 
 export const publicAuthRoutes = new Hono();
@@ -12,3 +18,4 @@ export const protectedAuthRoutes = new Hono();
 protectedAuthRoutes.use('*', authMiddleware);
 protectedAuthRoutes.get('/me', getProfile);
 protectedAuthRoutes.get('/stats', getStats);
+protectedAuthRoutes.post('/postProduct', postProductController);
