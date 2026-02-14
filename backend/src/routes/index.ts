@@ -1,2 +1,5 @@
 export { publicAuthRoutes, protectedAuthRoutes } from './auth.routes';
-export { publicProductsRoutes } from './products.routes';
+export {
+	publicProductsRoutes,
+	protectedProductsRoutes,
+} from './products.routes';

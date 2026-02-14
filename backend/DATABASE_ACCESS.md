@@ -17,3 +17,9 @@ Make the output readable
 ```
 
 Note: SQL statements must end with ;
+
+Frequently used
+
+```bash
+select * from "product";
+```

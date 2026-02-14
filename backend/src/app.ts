@@ -4,6 +4,7 @@ import { logger } from 'hono/logger';
 import {
 	protectedAuthRoutes,
 	publicAuthRoutes,
+	protectedProductsRoutes,
 	publicProductsRoutes,
 } from './routes';
 
@@ -25,6 +26,7 @@ export function createApp() {
 	app.route('/api/auth', publicAuthRoutes);
 	app.route('/api/auth', protectedAuthRoutes);
 	app.route('/api/products', publicProductsRoutes);
+	app.route('/api/products', protectedProductsRoutes);
 
 	return app;
 }

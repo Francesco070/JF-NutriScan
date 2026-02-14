@@ -1,12 +1,12 @@
 import type { Context } from 'hono';
 import { z } from 'zod';
 import { Prisma } from '../../db/prisma';
-import { postProductService } from '../../services/auth';
+import { createProduct } from '../../services/products';
 
 const nullableNumber = z.number().nullable();
 const nullableString = z.string().nullable();
 
-const postProductSchema = z.object({
+const createProductSchema = z.object({
 	barcode: z.string().min(1),
 	name: nullableString.optional(),
 	brand: nullableString.optional(),
@@ -46,9 +46,9 @@ const postProductSchema = z.object({
 	}),
 });
 
-export async function postProductController(c: Context) {
+export async function createProductController(c: Context) {
 	const body = await c.req.json().catch(() => null);
-	const parsed = postProductSchema.safeParse(body);
+	const parsed = createProductSchema.safeParse(body);
 
 	if (!parsed.success) {
 		return c.json({ error: 'Invalid payload' }, 400);
@@ -93,7 +93,7 @@ export async function postProductController(c: Context) {
 	};
 
 	try {
-		const result = await postProductService(product);
+		const result = await createProduct(product);
 		if (!result) {
 			return c.json({ error: 'Product already exists' }, 409);
 		}

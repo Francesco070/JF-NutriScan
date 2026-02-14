@@ -1,7 +1,7 @@
 import { prisma, Prisma } from '../../db/prisma';
 import type { ProductDto } from '../../models/product';
 
-export async function postProductService(product: ProductDto) {
+export async function createProduct(product: ProductDto) {
 	try {
 		const created = await prisma.product.create({
 			data: {
