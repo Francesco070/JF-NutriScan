@@ -1,94 +1,118 @@
-// frontend/src/stores/auth.ts
 import {defineStore} from 'pinia'
-import {ref} from 'vue'
-import {authAPI, getAuthToken, removeAuthToken, setAuthToken} from '@/services/api'
+import {computed, ref} from 'vue'
+import {authAPI} from '@/services/api'
+
+interface User {
+    firstname: string
+    lastname: string
+    email: string
+    profileImage?: string
+}
 
 export const useAuthStore = defineStore('auth', () => {
-    const user = ref<{ userId: string; email?: string; firstname?: string; lastname?: string } | null>(null)
-    const isAuthenticated = ref(false)
-    const isLoading = ref(false)
-    const error = ref<string | null>(null)
+    const token = ref<string | null>(localStorage.getItem('auth_token'))
+    const user = ref<User | null>(null)
+    const isInitialized = ref(false)
+
+    const isAuthenticated = computed(() => !!token.value && !!user.value)
+
+    // ============= Auth Actions =============
+
+    const setAuthToken = (newToken: string) => {
+        token.value = newToken
+        localStorage.setItem('auth_token', newToken)
+        console.log('🔑 Auth token set')
+    }
+
+    const removeAuthToken = () => {
+        token.value = null
+        user.value = null
+        localStorage.removeItem('auth_token')
+        console.log('🔑 Auth token removed')
+    }
+
+    const fetchUser = async () => {
+        try {
+            console.log('👤 Fetching user profile...')
+            user.value = await authAPI.me()
+            console.log('✅ User profile loaded:', user.value)
+        } catch (err) {
+            console.error('❌ Error fetching user:', err)
+            removeAuthToken()
+            throw err
+        }
+    }
 
     const initAuth = async () => {
-        const token = getAuthToken()
-        if (!token) return
+        if (isInitialized.value) return
 
-        try {
-            user.value = await authAPI.getMe()
-            isAuthenticated.value = true
-        } catch (err) {
-            removeAuthToken()
+        console.log('🔐 Initializing auth...')
+
+        if (token.value) {
+            try {
+                await fetchUser()
+                console.log('✅ Auth initialized with existing token')
+            } catch (err) {
+                console.error('❌ Token validation failed')
+                removeAuthToken()
+            }
         }
+
+        isInitialized.value = true
     }
 
     const login = async (email: string, password: string) => {
-        isLoading.value = true
-        error.value = null
-
         try {
-            console.log('🔐 Logging in:', email)
-            const response = await authAPI.login(email, password)
-
-            console.log('✅ Login response:', response)
-
+            console.log('🔐 Logging in...')
+            const response = await authAPI.login({ email, password })
             setAuthToken(response.token)
-            user.value = {
-                userId: response.userId,
-                email: response.email,
-                firstname: response.firstname,
-                lastname: response.lastname
-            }
-            isAuthenticated.value = true
-            return true
+            await fetchUser()
+            console.log('✅ Login successful')
         } catch (err: any) {
-            console.error('❌ Login error:', err)
-            error.value = err.message || 'Login fehlgeschlagen'
-            return false
-        } finally {
-            isLoading.value = false
+            console.error('❌ Login failed:', err)
+            throw new Error(err.message || 'Login fehlgeschlagen')
         }
     }
 
-    const register = async (
-        firstname: string,
-        lastname: string,
-        email: string,
+    const register = async (userData: {
+        email: string
         password: string
-    ) => {
-        isLoading.value = true
-        error.value = null
-
+        firstname: string
+        lastname: string
+    }) => {
         try {
-            console.log('📝 Registering:', { firstname: firstname, lastname: lastname, email })
-            await authAPI.register(firstname, lastname, email, password)
-
-            console.log('✅ Registration successful, logging in...')
-
-            // Nach erfolgreicher Registrierung direkt einloggen
-            return await login(email, password)
+            console.log('📝 Registering...')
+            await authAPI.register(userData)
+            console.log('✅ Registration successful')
+            // Auto-login after registration
+            await login(userData.email, userData.password)
         } catch (err: any) {
-            console.error('❌ Registration error:', err)
-            error.value = err.message || 'Registrierung fehlgeschlagen'
-            return false
-        } finally {
-            isLoading.value = false
+            console.error('❌ Registration failed:', err)
+            throw new Error(err.message || 'Registrierung fehlgeschlagen')
         }
     }
 
     const logout = () => {
+        console.log('👋 Logging out...')
         removeAuthToken()
-        user.value = null
-        isAuthenticated.value = false
     }
 
     return {
+        // State
+        token,
         user,
+        isInitialized,
+
+        // Computed
         isAuthenticated,
-        isLoading,
-        error,
-        initAuth,
+
+        // Actions
         login,
         register,
         logout,
+        initAuth,
+        fetchUser,
+        setAuthToken,
+        removeAuthToken,
     }
 })

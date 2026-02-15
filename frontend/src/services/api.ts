@@ -1,149 +1,129 @@
-// frontend/src/services/api.ts
-import { createApiUrl } from '@/config/api'
+import axios, { AxiosError } from 'axios'
+import { useAuthStore } from '@/stores/auth'
 
-// Token-Management
-export const getAuthToken = (): string | null => {
-    return localStorage.getItem('auth_token')
-}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
-export const setAuthToken = (token: string): void => {
-    localStorage.setItem('auth_token', token)
-}
+const api = axios.create({
+    baseURL: API_BASE_URL,
+})
 
-export const removeAuthToken = (): void => {
-    localStorage.removeItem('auth_token')
-}
-
-// Headers erstellen
-const getHeaders = (): HeadersInit => {
-    const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-    }
-
-    const token = getAuthToken()
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`
-    }
-
-    return headers
-}
-
-// Generic API call
-async function apiCall<T>(
-    endpoint: string,
-    options: RequestInit = {}
-): Promise<T> {
-    const url = createApiUrl(endpoint)
-
-    console.log('🌐 API Call:', url, options)
-
-    const response = await fetch(url, {
-        ...options,
-        headers: {
-            ...getHeaders(),
-            ...options.headers,
-        },
-    })
-
-    console.log('📡 Response status:', response.status)
-
-    // Check for 401 Unauthorized
-    if (response.status === 401) {
-        removeAuthToken()
-        window.location.href = '/login'
-        throw new Error('Unauthorized')
-    }
-
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
-    }
-
-    const data = await response.json()
-    console.log('✅ Response data:', data)
-
-    return data
-}
-
-// Auth API
-export const authAPI = {
-    register: async (
-        firstname: string,
-        lastname: string,
-        email: string,
-        password: string
-    ) => {
-        return apiCall<{ userId: string }>('/auth/register', {
-            method: 'POST',
-            body: JSON.stringify({ firstname: firstname, lastname: lastname, email, password }),
-        })
+// Request Interceptor - Add Auth Token
+api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('auth_token')
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`
+        }
+        console.log('🌐 API Call:', config.url, { method: config.method?.toUpperCase() })
+        return config
     },
+    (error) => {
+        return Promise.reject(error)
+    }
+)
 
-    login: async (email: string, password: string) => {
-        return apiCall<{
-            token: string
-            userId: string
-            email: string
-            firstname?: string
-            lastname?: string
-        }>('/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({ email, password }),
-        })
+// Response Interceptor - Handle 401 Errors
+api.interceptors.response.use(
+    (response) => {
+        console.log('📡 Response status:', response.status)
+        return response
     },
+    (error: AxiosError) => {
+        if (error.response?.status === 401) {
+            console.log('🔒 401 Unauthorized - Redirecting to login')
+            const authStore = useAuthStore()
+            authStore.logout()
 
-    getMe: async () => {
-        return apiCall<{
-            userId: string
-            email: string
-            firstname?: string
-            lastname?: string
-        }>('/auth/me', {
-            method: 'GET',
-        })
-    },
-}
-
-// Products API
-export const productsAPI = {
-    getByBarcode: async (barcode: string) => {
-        return apiCall<{
-            source: string
-            product: {
-                barcode: string
-                name: string | null
-                brand: string | null
-                imageUrl: string | null
-                imageIngredientsUrl?: string | null
-                imageNutritionUrl?: string | null
-                categories?: string | null
-                ingredients?: string | null
-                allergens?: string | null
-                nutriscore?: {
-                    grade: string | null
-                    score: number | null
-                } | null
-                serving?: {
-                    size: string | null
-                    quantity: number | null
-                    unitBasis: string | null
-                } | null
-                nutriments: {
-                    energyKj100g: number | null
-                    energyKcal100g: number | null
-                    energyKcalServing: number | null
-                    proteins100g: number | null
-                    carbs100g: number | null
-                    fat100g: number | null
-                    saturatedFat100g: number | null
-                    sugars100g: number | null
-                    fiber100g: number | null
-                    salt100g: number | null
-                    sodium100g: number | null
-                }
+            // Redirect to login
+            if (typeof window !== 'undefined') {
+                window.location.href = '/login'
             }
-        }>(`/products/${barcode}`, {
-            method: 'GET',
+        }
+        return Promise.reject(error)
+    }
+)
+
+// Generic API Call Handler
+async function apiCall<T>(
+    method: 'get' | 'post' | 'put' | 'delete',
+    url: string,
+    data?: any
+): Promise<T> {
+    try {
+        const response = await api.request<T>({
+            method,
+            url,
+            data,
         })
-    },
+        console.log('✅ Response data:', response.data)
+        return response.data
+    } catch (error: any) {
+        console.error('❌ API Error:', error.response?.data || error.message)
+        if (error.response?.status === 404) {
+            throw new Error('Product not found')
+        }
+        throw new Error(error.response?.data?.message || 'API request failed')
+    }
 }
+
+// ============= Auth API =============
+
+export const authAPI = {
+    register: (userData: { email: string; password: string; firstname: string; lastname: string }) =>
+        apiCall<{ message: string }>('post', '/auth/register', userData),
+
+    login: (credentials: { email: string; password: string }) =>
+        apiCall<{ token: string }>('post', '/auth/login', credentials),
+
+    me: () =>
+        apiCall<{ firstname: string; lastname: string; email: string; profileImage?: string }>('get', '/auth/me'),
+
+    getStats: () =>
+        apiCall<{
+            totalScans: number
+            totalFavorites: number
+            healthScoreTrend: Array<{ date: string; score: number | null }>
+            nutriScoreDistribution: Array<{ grade: string; count: number }>
+        }>('get', '/auth/stats'),
+
+    updateProfile: (userData: {
+        email?: string
+        password?: string
+        firstname?: string
+        lastname?: string
+        profileImage?: string
+    }) =>
+        apiCall<{ message: string }>('put', '/auth/update', userData),
+}
+
+// ============= Products API =============
+
+export const productsAPI = {
+    getByBarcode: (barcode: string) =>
+        apiCall<{ source: string; product: any }>('get', `/products/${barcode}`),
+
+    create: (productData: any) =>
+        apiCall<{ message: string }>('post', '/products', productData),
+
+    delete: (barcode: string) =>
+        apiCall<{ message: string }>('delete', `/products/${barcode}`),
+
+    // Recent Products (user_product table)
+    saveToHistory: (barcode: string) =>
+        apiCall<{ message: string }>('post', '/products/history', { barcode }),
+
+    getRecentProducts: () =>
+        apiCall<any[]>('get', '/products/history'),
+
+    // Favorites
+    addToFavorites: (barcode: string) =>
+        apiCall<{ message: string }>('post', '/products/favorites', { barcode }),
+
+    removeFromFavorites: (barcode: string) =>
+        apiCall<{ message: string }>('delete', `/products/favorites/${barcode}`),
+
+    getFavorites: () =>
+        apiCall<any[]>('get', '/products/favorites'),
+}
+
+export default api
