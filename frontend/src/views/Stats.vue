@@ -102,37 +102,61 @@
           </v-card-text>
         </v-card>
 
-        <!-- Nutri Score Distribution -->
-        <v-card class="mb-4" color="surface" rounded="lg">
+        <!-- Nutri Score Distribution PIE CHART -->
+        <v-card class="mb-4" color="surface" elevation="0" rounded="lg">
+          <v-card-title class="d-flex align-center">
+            <v-icon class="mr-2">mdi-chart-donut</v-icon>
+            Nutri-Score Distribution
+          </v-card-title>
           <v-card-text>
-            <h3 class="text-h6 font-weight-bold mb-4">Nutri-Score Distribution</h3>
-
             <!-- No Data State -->
-            <div v-if="stats.nutriScoreDistribution.length === 0" class="text-center py-4">
-              <v-icon size="64" color="grey">mdi-chart-donut</v-icon>
-              <p class="text-body-2 text-medium-emphasis mt-2">
-                Noch keine Produkte gescannt
-              </p>
-            </div>
+            <v-alert v-if="hasNoScoreData" type="info" variant="tonal" rounded="lg">
+              <template v-slot:prepend>
+                <v-icon size="large">mdi-chart-donut</v-icon>
+              </template>
+              <div class="text-subtitle-1">Noch keine Bewertungen</div>
+              <div class="text-caption">Scanne Produkte mit Nutri-Score!</div>
+            </v-alert>
 
-            <!-- Distribution Bars -->
+            <!-- Pie Chart -->
             <div v-else>
-              <div v-for="item in stats.nutriScoreDistribution" :key="item.grade" class="score-bar">
-                <div class="d-flex justify-space-between mb-1">
-                  <span class="text-caption">
-                    {{ item.grade.toUpperCase() }} - {{ getScoreLabel(item.grade) }}
-                  </span>
-                  <span class="text-caption font-weight-bold">
-                    {{ item.count }} ({{ item.percent }}%)
-                  </span>
-                </div>
-                <v-progress-linear
-                    :model-value="item.percent"
-                    :color="getScoreColor(item.grade)"
-                    height="8"
-                    rounded
-                />
+              <div class="pie-chart-container">
+                <svg :width="pieSize" :height="pieSize">
+                  <g v-for="slice in pieSlices" :key="slice.grade">
+                    <path :d="slice.path" :fill="getScoreColorHex(slice.grade)"
+                          stroke="#192328" stroke-width="3" class="pie-slice"
+                          @mouseenter="hoveredSlice = slice.grade"
+                          @mouseleave="hoveredSlice = null" />
+                  </g>
+                  <circle :cx="pieSize/2" :cy="pieSize/2" :r="pieSize/4" fill="#192328" />
+                  <text :x="pieSize/2" :y="pieSize/2-10" text-anchor="middle"
+                        class="pie-center-text-large" fill="white">{{ totalScored }}</text>
+                  <text :x="pieSize/2" :y="pieSize/2+15" text-anchor="middle"
+                        class="pie-center-text-small" fill="grey">Rated</text>
+                </svg>
               </div>
+
+              <!-- Vuetify Legend -->
+              <v-list bg-color="transparent" class="mt-4">
+                <v-list-item v-for="item in stats.nutriScoreDistribution.filter(i => i.count > 0)"
+                             :key="item.grade" rounded="lg" class="legend-item mb-2"
+                             @mouseenter="hoveredSlice = item.grade"
+                             @mouseleave="hoveredSlice = null">
+                  <template v-slot:prepend>
+                    <v-avatar :color="getScoreColorHex(item.grade)" size="16" class="mr-3" />
+                  </template>
+                  <v-list-item-title>
+                    <span class="text-subtitle-2 font-weight-bold mr-2">{{ item.grade.toUpperCase() }}</span>
+                    <v-chip size="x-small" variant="text">{{ getScoreLabel(item.grade) }}</v-chip>
+                  </v-list-item-title>
+                  <template v-slot:append>
+                    <div class="text-right">
+                      <div class="text-subtitle-2 font-weight-bold">{{ item.count }}</div>
+                      <div class="text-caption">({{ item.percent }}%)</div>
+                    </div>
+                  </template>
+                </v-list-item>
+              </v-list>
             </div>
           </v-card-text>
         </v-card>
@@ -200,6 +224,24 @@ const stats = ref({
 const chartWidth = 300
 const chartHeight = 200
 const padding = 10
+
+const hoveredSlice = ref<string | null>(null)
+const pieSize = 280
+const pieRadius = pieSize / 2 - 20
+const pieInnerRadius = pieSize / 4
+
+const hasNoScoreData = computed(() =>
+    stats.value.nutriScoreDistribution.every(item => item.count === 0)
+)
+
+const totalScored = computed(() =>
+    stats.value.nutriScoreDistribution.reduce((sum, item) => sum + item.count, 0)
+)
+
+const getScoreColorHex = (grade: string): string => ({
+  A: '#4CAF50', B: '#8BC34A', C: '#FFC107',
+  D: '#FF9800', E: '#F44336'
+}[grade.toUpperCase()] || '#9E9E9E')
 
 // Parse trend data for chart
 const parsedTrendData = computed(() => {
@@ -336,6 +378,13 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.pie-chart-container { display: flex; justify-content: center; padding: 20px; }
+.pie-slice { cursor: pointer; transition: all 0.3s; }
+.pie-slice:hover { opacity: 0.85; filter: brightness(1.15); }
+.pie-center-text-large { font-size: 36px; font-weight: bold; }
+.pie-center-text-small { font-size: 14px; }
+.legend-item { transition: all 0.2s; cursor: pointer; }
+.legend-item:hover { background-color: rgba(var(--v-theme-surface-variant), 0.3) !important; }
 /* Wrapper with proper height and scrolling */
 .stats-wrapper {
   height: 100vh;
