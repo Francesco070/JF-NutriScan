@@ -89,9 +89,32 @@
                   </v-chip>
 
                   <!-- Produktname -->
-                  <h1 class="text-h4 mb-2">
+                  <h1 class="text-h4 mb-3">
                     {{ product.name || 'Unbekanntes Produkt' }}
                   </h1>
+
+                  <!-- Action Buttons -->
+                  <div class="d-flex flex-wrap gap-2 mb-3">
+                    <v-btn
+                        :color="isFavorite ? 'error' : 'primary'"
+                        :prepend-icon="isFavorite ? 'mdi-heart' : 'mdi-heart-outline'"
+                        @click="toggleFavorite"
+                        :loading="favoriteLoading"
+                        variant="flat"
+                    >
+                      {{ isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen' }}
+                    </v-btn>
+
+                    <v-btn
+                        color="secondary"
+                        prepend-icon="mdi-history"
+                        @click="addToHistoryClick"
+                        :loading="historyLoading"
+                        variant="flat"
+                    >
+                      Zur Historie hinzufügen
+                    </v-btn>
+                  </div>
 
                   <!-- Marke -->
                   <p v-if="product.brand" class="text-h6 text-grey-darken-1 mb-3">
@@ -129,13 +152,33 @@
         </v-col>
       </v-row>
 
+      <!-- Success Snackbar -->
+      <v-snackbar
+          v-model="successSnackbar"
+          :timeout="3000"
+          color="success"
+          location="top"
+      >
+        {{ successMessage }}
+      </v-snackbar>
+
+      <!-- Error Snackbar -->
+      <v-snackbar
+          v-model="errorSnackbar"
+          :timeout="3000"
+          color="error"
+          location="top"
+      >
+        {{ errorMessage }}
+      </v-snackbar>
+
       <!-- Nährwerte -->
       <v-row class="mt-4">
         <v-col cols="12">
           <v-card color="background" elevation="0">
             <v-card-title>
               <v-icon left>mdi-nutrition</v-icon>
-              Nährwerte pro {{ product.serving?.unitBasis }}
+              Nährwerte pro {{ product.serving?.unitBasis || '100g' }}
             </v-card-title>
             <v-card-text>
               <v-row>
@@ -333,9 +376,71 @@ const ingredientsExpanded = ref(false)
 const imageDialog = ref(false)
 const dialogImageUrl = ref('')
 const dialogImageTitle = ref('')
+const isFavorite = ref(false)
+const favoriteLoading = ref(false)
+const historyLoading = ref(false)
+const successSnackbar = ref(false)
+const successMessage = ref('')
+const errorSnackbar = ref(false)
+const errorMessage = ref('')
 
 // Produkt aus dem Store
 const product = computed(() => productsStore.currentProduct)
+
+// Check if product is favorite
+const checkIfFavorite = async () => {
+  if (!product.value) return
+
+  try {
+    isFavorite.value = await productsStore.checkFavorite(product.value.barcode)
+    console.log(`⭐ Favorite status: ${isFavorite.value}`)
+  } catch (err) {
+    console.error('Failed to check favorite status:', err)
+  }
+}
+
+// Toggle favorite
+const toggleFavorite = async () => {
+  if (!product.value) return
+
+  favoriteLoading.value = true
+
+  try {
+    if (isFavorite.value) {
+      await productsStore.removeFromFavorites(product.value.barcode)
+      isFavorite.value = false
+      successMessage.value = 'Aus Favoriten entfernt'
+    } else {
+      await productsStore.addToFavorites(product.value.barcode)
+      isFavorite.value = true
+      successMessage.value = 'Zu Favoriten hinzugefügt'
+    }
+    successSnackbar.value = true
+  } catch (err: any) {
+    errorMessage.value = err.message || 'Fehler beim Aktualisieren der Favoriten'
+    errorSnackbar.value = true
+  } finally {
+    favoriteLoading.value = false
+  }
+}
+
+// Add to history
+const addToHistoryClick = async () => {
+  if (!product.value) return
+
+  historyLoading.value = true
+
+  try {
+    await productsStore.addToHistory(product.value.barcode)
+    successMessage.value = 'Zur Historie hinzugefügt'
+    successSnackbar.value = true
+  } catch (err: any) {
+    errorMessage.value = err.message || 'Fehler beim Hinzufügen zur Historie'
+    errorSnackbar.value = true
+  } finally {
+    historyLoading.value = false
+  }
+}
 
 // Nutri-Score Farbe
 const getNutriscoreColor = (grade: string): string => {
@@ -372,6 +477,7 @@ const loadProduct = async () => {
 
   // Prüfen ob Produkt bereits im Store ist
   if (product.value && product.value.barcode === barcode) {
+    await checkIfFavorite()
     return
   }
 
@@ -383,6 +489,8 @@ const loadProduct = async () => {
 
     if (!loadedProduct) {
       error.value = productsStore.error || 'Produkt konnte nicht geladen werden'
+    } else {
+      await checkIfFavorite()
     }
   } catch (err: any) {
     error.value = 'Fehler beim Laden des Produkts'
@@ -427,5 +535,9 @@ onMounted(() => {
 .nutrient-card:hover {
   background: rgba(0, 0, 0, 0.05);
   transition: background 0.3s;
+}
+
+.gap-2 {
+  gap: 8px;
 }
 </style>

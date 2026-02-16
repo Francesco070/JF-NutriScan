@@ -60,7 +60,7 @@ async function apiCall<T>(
     } catch (error: any) {
         console.error('❌ API Error:', error.response?.data || error.message)
         if (error.response?.status === 404) {
-            throw new Error('Product not found')
+            throw new Error('Api error. Try again later.')
         }
         throw new Error(error.response?.data?.message || 'API request failed')
     }
@@ -70,10 +70,10 @@ async function apiCall<T>(
 
 export const authAPI = {
     register: (userData: { email: string; password: string; firstname: string; lastname: string }) =>
-        apiCall<{ message: string }>('post', '/auth/register', userData),
+        apiCall<{ userId: string }>('post', '/auth/register', userData),
 
     login: (credentials: { email: string; password: string }) =>
-        apiCall<{ token: string }>('post', '/auth/login', credentials),
+        apiCall<{ token: string; userId: string }>('post', '/auth/login', credentials),
 
     me: () =>
         apiCall<{ firstname: string; lastname: string; email: string; profileImage?: string }>('get', '/auth/me'),
@@ -83,7 +83,7 @@ export const authAPI = {
             totalScans: number
             totalFavorites: number
             healthScoreTrend: Array<{ date: string; score: number | null }>
-            nutriScoreDistribution: Array<{ grade: string; count: number }>
+            nutriScoreDistribution: Array<{ grade: string; count: number; percent: number }>
         }>('get', '/auth/stats'),
 
     updateProfile: (userData: {
@@ -91,7 +91,6 @@ export const authAPI = {
         password?: string
         firstname?: string
         lastname?: string
-        profileImage?: string
     }) =>
         apiCall<{ message: string }>('put', '/auth/update', userData),
 }
@@ -108,22 +107,25 @@ export const productsAPI = {
     delete: (barcode: string) =>
         apiCall<{ message: string }>('delete', `/products/${barcode}`),
 
-    // Recent Products (user_product table)
-    saveToHistory: (barcode: string) =>
-        apiCall<{ message: string }>('post', '/products/history', { barcode }),
-
-    getRecentProducts: () =>
-        apiCall<any[]>('get', '/products/history'),
-
     // Favorites
     addToFavorites: (barcode: string) =>
-        apiCall<{ message: string }>('post', '/products/favorites', { barcode }),
+        apiCall<{ message: string }>('post', `/products/favorites/${barcode}`),
 
     removeFromFavorites: (barcode: string) =>
         apiCall<{ message: string }>('delete', `/products/favorites/${barcode}`),
 
     getFavorites: () =>
         apiCall<any[]>('get', '/products/favorites'),
+
+    checkFavorite: (barcode: string) =>
+        apiCall<{ isFavorite: boolean }>('get', `/products/favorites/${barcode}/check`),
+
+    // History
+    addToHistory: (barcode: string) =>
+        apiCall<{ message: string }>('post', `/products/history/${barcode}`),
+
+    getHistory: () =>
+        apiCall<any[]>('get', '/products/history'),
 }
 
 export default api

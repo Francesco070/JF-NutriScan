@@ -262,15 +262,16 @@ const handleRegister = async () => {
   }
 
   // Register
-  const success = await authStore.register(
-      firstname.value,
-      lastname.value,
-      email.value,
-      password.value
-  )
+  const success = await authStore.register({
+    firstname: firstname.value,
+    lastname: lastname.value,
+    email: email.value,
+    password: password.value
+  })
 
   if (success) {
-    router.push('/')
+    console.log('✅ Registrierung erfolgreich - Redirect zu Home')
+    await router.push('/')
   }
 }
 </script>

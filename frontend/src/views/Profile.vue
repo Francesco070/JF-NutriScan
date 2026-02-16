@@ -28,7 +28,7 @@
             </v-avatar>
             <h2 class="text-h5 font-weight-bold mb-1">{{ fullName }}</h2>
             <p class="text-body-2 text-medium-emphasis mb-4">{{ userEmail }}</p>
-            <v-btn color="primary" variant="tonal" rounded="lg" disabled>
+            <v-btn color="primary" variant="tonal" rounded="lg" @click="editDialog = true">
               Edit Profile
             </v-btn>
           </v-card-text>
@@ -169,11 +169,85 @@
         </v-card>
       </template>
     </v-container>
+
+    <!-- Edit Profile Dialog -->
+    <v-dialog v-model="editDialog" max-width="500px">
+      <v-card rounded="xl">
+        <v-card-title class="text-h5 font-weight-bold">Profil bearbeiten</v-card-title>
+        <v-card-text>
+          <v-form ref="editForm">
+            <v-text-field
+                v-model="editData.firstname"
+                label="Vorname"
+                variant="outlined"
+                prepend-inner-icon="mdi-account"
+                class="mb-3"
+            />
+            <v-text-field
+                v-model="editData.lastname"
+                label="Nachname"
+                variant="outlined"
+                prepend-inner-icon="mdi-account"
+                class="mb-3"
+            />
+            <v-text-field
+                v-model="editData.email"
+                label="Email"
+                type="email"
+                variant="outlined"
+                prepend-inner-icon="mdi-email"
+                class="mb-3"
+            />
+            <v-text-field
+                v-model="editData.password"
+                label="Neues Passwort (optional)"
+                type="password"
+                variant="outlined"
+                prepend-inner-icon="mdi-lock"
+                hint="Leer lassen um aktuelles Passwort zu behalten"
+                persistent-hint
+            />
+          </v-form>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="editDialog = false">Abbrechen</v-btn>
+          <v-btn
+              color="primary"
+              variant="flat"
+              @click="saveProfile"
+              :loading="saving"
+          >
+            Speichern
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Success Snackbar -->
+    <v-snackbar
+        v-model="successSnackbar"
+        :timeout="3000"
+        color="success"
+        location="top"
+    >
+      Profil erfolgreich aktualisiert!
+    </v-snackbar>
+
+    <!-- Error Snackbar -->
+    <v-snackbar
+        v-model="errorSnackbar"
+        :timeout="3000"
+        color="error"
+        location="top"
+    >
+      {{ errorMessage }}
+    </v-snackbar>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
 import { useAuthStore } from '@/stores/auth'
@@ -187,6 +261,18 @@ const isDark = ref(theme.global.name.value === 'dark')
 const isLoading = ref(true)
 const notificationsEnabled = ref(true)
 const offlineModeEnabled = ref(false)
+const editDialog = ref(false)
+const saving = ref(false)
+const successSnackbar = ref(false)
+const errorSnackbar = ref(false)
+const errorMessage = ref('')
+
+const editData = ref({
+  firstname: '',
+  lastname: '',
+  email: '',
+  password: ''
+})
 
 const stats = ref({
   totalScans: 0,
@@ -226,14 +312,58 @@ const calculateStreak = () => {
 }
 
 const toggleTheme = () => {
+  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
   isDark.value = !isDark.value
-  // Verwende die korrekte Vuetify 3 API für Theme-Switching
-  theme.global.current.value.dark = isDark.value
 }
 
 const handleLogout = () => {
   authStore.logout()
   router.push('/login')
+}
+
+// Watch edit dialog to populate form
+watch(editDialog, (newVal) => {
+  if (newVal && authStore.user) {
+    editData.value = {
+      firstname: authStore.user.firstname,
+      lastname: authStore.user.lastname,
+      email: authStore.user.email,
+      password: ''
+    }
+  }
+})
+
+const saveProfile = async () => {
+  saving.value = true
+
+  try {
+    const updateData: any = {
+      firstname: editData.value.firstname,
+      lastname: editData.value.lastname,
+      email: editData.value.email,
+    }
+
+    // Only include password if provided
+    if (editData.value.password) {
+      updateData.password = editData.value.password
+    }
+
+    const success = await authStore.updateProfile(updateData)
+
+    if (success) {
+      editDialog.value = false
+      successSnackbar.value = true
+    } else {
+      errorMessage.value = authStore.error || 'Update fehlgeschlagen'
+      errorSnackbar.value = true
+    }
+  } catch (err: any) {
+    console.error('Failed to update profile:', err)
+    errorMessage.value = err.message || 'Update fehlgeschlagen'
+    errorSnackbar.value = true
+  } finally {
+    saving.value = false
+  }
 }
 
 onMounted(async () => {

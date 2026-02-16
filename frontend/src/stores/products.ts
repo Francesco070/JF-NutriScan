@@ -156,31 +156,6 @@ export const useProductsStore = defineStore('products', () => {
         }
     }
 
-    // ============= Recent Products (user_product table) =============
-
-    const saveToHistory = async (barcode: string): Promise<void> => {
-        try {
-            console.log('💾 Saving to history:', barcode)
-            await productsAPI.saveToHistory(barcode)
-            console.log('✅ Saved to history')
-        } catch (err: any) {
-            console.error('❌ Error saving to history:', err)
-            throw err
-        }
-    }
-
-    const fetchRecentProducts = async (): Promise<void> => {
-        try {
-            console.log('📡 Fetching recent products')
-            const products = await productsAPI.getRecentProducts()
-            recentProducts.value = products
-            console.log('✅ Recent products loaded:', products.length)
-        } catch (err: any) {
-            console.error('❌ Error fetching recent products:', err)
-            throw err
-        }
-    }
-
     // ============= Favorites =============
 
     const addToFavorites = async (barcode: string): Promise<void> => {
@@ -228,11 +203,46 @@ export const useProductsStore = defineStore('products', () => {
         }
     }
 
+    const checkFavorite = async (barcode: string): Promise<boolean> => {
+        try {
+            const result = await productsAPI.checkFavorite(barcode)
+            return result.isFavorite
+        } catch (err: any) {
+            console.error('❌ Error checking favorite:', err)
+            return false
+        }
+    }
+
     const isFavorite = computed(() => {
         return (barcode: string) => {
             return favoriteProducts.value.some(p => p.barcode === barcode)
         }
     })
+
+    // ============= History =============
+
+    const addToHistory = async (barcode: string): Promise<void> => {
+        try {
+            console.log('📜 Adding to history:', barcode)
+            await productsAPI.addToHistory(barcode)
+            console.log('✅ Added to history')
+        } catch (err: any) {
+            console.error('❌ Error adding to history:', err)
+            throw err
+        }
+    }
+
+    const fetchHistory = async (): Promise<void> => {
+        try {
+            console.log('📡 Fetching history')
+            const products = await productsAPI.getHistory()
+            recentProducts.value = products
+            console.log('✅ History loaded:', products.length)
+        } catch (err: any) {
+            console.error('❌ Error fetching history:', err)
+            throw err
+        }
+    }
 
     // ============= Clear Cache (for debugging) =============
 
@@ -251,11 +261,12 @@ export const useProductsStore = defineStore('products', () => {
 
         // Actions
         fetchProductByBarcode,
-        saveToHistory,
-        fetchRecentProducts,
         addToFavorites,
         removeFromFavorites,
         fetchFavorites,
+        checkFavorite,
+        addToHistory,
+        fetchHistory,
         clearCache,
 
         // Computed

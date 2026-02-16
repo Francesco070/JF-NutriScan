@@ -13,6 +13,8 @@ export const useAuthStore = defineStore('auth', () => {
     const token = ref<string | null>(localStorage.getItem('auth_token'))
     const user = ref<User | null>(null)
     const isInitialized = ref(false)
+    const isLoading = ref(false)
+    const error = ref<string | null>(null)
 
     const isAuthenticated = computed(() => !!token.value && !!user.value)
 
@@ -62,15 +64,22 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     const login = async (email: string, password: string) => {
+        isLoading.value = true
+        error.value = null
+
         try {
             console.log('🔐 Logging in...')
             const response = await authAPI.login({ email, password })
             setAuthToken(response.token)
             await fetchUser()
             console.log('✅ Login successful')
+            return true
         } catch (err: any) {
             console.error('❌ Login failed:', err)
-            throw new Error(err.message || 'Login fehlgeschlagen')
+            error.value = err.message || 'Login fehlgeschlagen'
+            return false
+        } finally {
+            isLoading.value = false
         }
     }
 
@@ -80,15 +89,45 @@ export const useAuthStore = defineStore('auth', () => {
         firstname: string
         lastname: string
     }) => {
+        isLoading.value = true
+        error.value = null
+
         try {
             console.log('📝 Registering...')
             await authAPI.register(userData)
             console.log('✅ Registration successful')
             // Auto-login after registration
-            await login(userData.email, userData.password)
+            return await login(userData.email, userData.password)
         } catch (err: any) {
             console.error('❌ Registration failed:', err)
-            throw new Error(err.message || 'Registrierung fehlgeschlagen')
+            error.value = err.message || 'Registrierung fehlgeschlagen'
+            return false
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    const updateProfile = async (userData: {
+        firstname?: string
+        lastname?: string
+        email?: string
+        password?: string
+    }) => {
+        isLoading.value = true
+        error.value = null
+
+        try {
+            console.log('📝 Updating profile...')
+            await authAPI.updateProfile(userData)
+            await fetchUser() // Reload user data
+            console.log('✅ Profile updated')
+            return true
+        } catch (err: any) {
+            console.error('❌ Update failed:', err)
+            error.value = err.message || 'Update fehlgeschlagen'
+            return false
+        } finally {
+            isLoading.value = false
         }
     }
 
@@ -102,6 +141,8 @@ export const useAuthStore = defineStore('auth', () => {
         token,
         user,
         isInitialized,
+        isLoading,
+        error,
 
         // Computed
         isAuthenticated,
@@ -112,6 +153,7 @@ export const useAuthStore = defineStore('auth', () => {
         logout,
         initAuth,
         fetchUser,
+        updateProfile,
         setAuthToken,
         removeAuthToken,
     }
