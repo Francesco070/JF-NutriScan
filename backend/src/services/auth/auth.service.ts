@@ -2,6 +2,7 @@ import { getProfile } from './getProfile';
 import { getStats } from './getStats';
 import { login } from './login';
 import { register } from './register';
+import { updateProfile } from './updateProfile';
 
 export { EmailAlreadyExistsError } from './errors';
 
@@ -25,6 +26,18 @@ class AuthService {
 
 	public async getStats(userId: string) {
 		return getStats(userId);
+	}
+
+	public async updateProfile(
+		userId: string,
+		data: {
+			firstname?: string;
+			lastname?: string;
+			email?: string;
+			password?: string;
+		},
+	) {
+		return updateProfile(userId, data);
 	}
 }
 
