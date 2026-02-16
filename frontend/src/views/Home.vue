@@ -30,6 +30,26 @@
       </v-card-text>
     </v-card>
 
+    <!-- Weekly Progress -->
+    <v-card class="mb-4" color="surface" rounded="lg">
+      <v-card-text>
+        <div class="d-flex justify-space-between align-center mb-2">
+          <h3 class="text-subtitle-1 font-weight-bold">Weekly Goal Progress</h3>
+          <v-chip color="success" size="small" variant="flat">Excellent</v-chip>
+        </div>
+        <v-progress-linear
+            :model-value="75"
+            color="success"
+            height="8"
+            rounded
+            class="mb-2"
+        ></v-progress-linear>
+        <p class="text-caption text-medium-emphasis">
+          You are consuming 15% less processed sugar than last week.
+        </p>
+      </v-card-text>
+    </v-card>
+
     <!-- Stats Row -->
     <v-row class="mb-5" dense>
       <v-col cols="4">
@@ -84,7 +104,7 @@
       </v-btn>
     </div>
 
-    <div v-if="recentScans.length === 0" class="text-center py-10">
+    <div v-if="recentScans.length === 0" class="text-center py-10 mb-8">
       <v-icon size="72" color="grey-darken-1" class="mb-4">mdi-barcode-scan</v-icon>
       <h4 class="text-subtitle-1 font-weight-bold mb-2">No scans yet</h4>
       <p class="text-body-2 text-medium-emphasis mb-5">Scan your first product to get started</p>
@@ -94,7 +114,7 @@
       </v-btn>
     </div>
 
-    <div v-else>
+    <div v-else class="mb-8">
       <v-card
           v-for="item in recentScans.slice(0, 6)"
           :key="item.barcode"
@@ -128,6 +148,24 @@
         </v-card-text>
       </v-card>
     </div>
+
+    <!-- Daily Insight -->
+    <v-card color="surface" rounded="lg">
+      <v-card-text>
+        <h3 class="text-subtitle-1 font-weight-bold mb-3">Daily Insight</h3>
+        <div class="d-flex">
+          <v-avatar color="success" size="40" class="mr-3">
+            <v-icon>mdi-lightbulb-outline</v-icon>
+          </v-avatar>
+          <div>
+            <h4 class="text-subtitle-2 font-weight-bold mb-1">Better Alternatives Found</h4>
+            <p class="text-caption text-medium-emphasis">
+              We found a brand of Almond Milk with 50% less sugar than your usual choice. Check it out!
+            </p>
+          </div>
+        </div>
+      </v-card-text>
+    </v-card>
   </v-container>
 </template>
 

@@ -6,11 +6,6 @@
         <v-col cols="12">
           <div class="d-flex align-center justify-space-between mb-4">
             <h1 class="text-h4 font-weight-bold">Statistics</h1>
-            <v-btn-toggle v-model="timeRange" mandatory rounded="lg" density="compact">
-              <v-btn value="week">Week</v-btn>
-              <v-btn value="month">Month</v-btn>
-              <v-btn value="year">Year</v-btn>
-            </v-btn-toggle>
           </div>
         </v-col>
       </v-row>
@@ -210,7 +205,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { authAPI } from '@/services/api'
 
-const timeRange = ref('week')
 const isLoading = ref(true)
 
 const stats = ref({
@@ -237,6 +231,53 @@ const hasNoScoreData = computed(() =>
 const totalScored = computed(() =>
     stats.value.nutriScoreDistribution.reduce((sum, item) => sum + item.count, 0)
 )
+
+const pieSlices = computed(() => {
+  const data = stats.value.nutriScoreDistribution.filter(item => item.count > 0)
+  if (data.length === 0) return []
+
+  const total = data.reduce((sum, item) => sum + item.count, 0)
+  const centerX = pieSize / 2
+  const centerY = pieSize / 2
+
+  let currentAngle = -Math.PI / 2 // Start at top (12 o'clock)
+
+  return data.map(item => {
+    const angle = (item.count / total) * 2 * Math.PI
+    const endAngle = currentAngle + angle
+
+    // Calculate outer arc points
+    const x1 = centerX + pieRadius * Math.cos(currentAngle)
+    const y1 = centerY + pieRadius * Math.sin(currentAngle)
+    const x2 = centerX + pieRadius * Math.cos(endAngle)
+    const y2 = centerY + pieRadius * Math.sin(endAngle)
+
+    // Calculate inner arc points
+    const x3 = centerX + pieInnerRadius * Math.cos(endAngle)
+    const y3 = centerY + pieInnerRadius * Math.sin(endAngle)
+    const x4 = centerX + pieInnerRadius * Math.cos(currentAngle)
+    const y4 = centerY + pieInnerRadius * Math.sin(currentAngle)
+
+    const largeArc = angle > Math.PI ? 1 : 0
+
+    // Create donut slice path
+    const path = [
+      `M ${x1} ${y1}`, // Move to start of outer arc
+      `A ${pieRadius} ${pieRadius} 0 ${largeArc} 1 ${x2} ${y2}`, // Outer arc
+      `L ${x3} ${y3}`, // Line to inner arc
+      `A ${pieInnerRadius} ${pieInnerRadius} 0 ${largeArc} 0 ${x4} ${y4}`, // Inner arc
+      'Z' // Close path
+    ].join(' ')
+
+    currentAngle = endAngle
+
+    return {
+      grade: item.grade,
+      path,
+      percent: item.percent
+    }
+  })
+})
 
 const getScoreColorHex = (grade: string): string => ({
   A: '#4CAF50', B: '#8BC34A', C: '#FFC107',

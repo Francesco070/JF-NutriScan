@@ -67,17 +67,7 @@
           <v-list bg-color="transparent">
             <v-list-subheader class="text-subtitle-2 font-weight-bold">PREFERENCES</v-list-subheader>
 
-            <v-list-item @click="() => {}">
-              <template v-slot:prepend>
-                <v-icon>mdi-bell-outline</v-icon>
-              </template>
-              <v-list-item-title>Notifications</v-list-item-title>
-              <template v-slot:append>
-                <v-switch v-model="notificationsEnabled" color="primary" hide-details inset></v-switch>
-              </template>
-            </v-list-item>
-
-            <v-list-item @click="() => {}">
+            <v-list-item>
               <template v-slot:prepend>
                 <v-icon>{{ isDark ? 'mdi-weather-night' : 'mdi-white-balance-sunny' }}</v-icon>
               </template>
@@ -87,31 +77,12 @@
               </template>
             </v-list-item>
 
-            <v-list-item @click="() => {}">
-              <template v-slot:prepend>
-                <v-icon>mdi-web</v-icon>
-              </template>
-              <v-list-item-title>Offline Mode</v-list-item-title>
-              <template v-slot:append>
-                <v-switch v-model="offlineModeEnabled" color="primary" hide-details inset></v-switch>
-              </template>
-            </v-list-item>
           </v-list>
         </v-card>
 
         <v-card class="mb-4" color="surface" rounded="lg">
           <v-list bg-color="transparent">
             <v-list-subheader class="text-subtitle-2 font-weight-bold">ACCOUNT</v-list-subheader>
-
-            <v-list-item @click="() => {}">
-              <template v-slot:prepend>
-                <v-icon>mdi-lock-outline</v-icon>
-              </template>
-              <v-list-item-title>Privacy & Security</v-list-item-title>
-              <template v-slot:append>
-                <v-icon>mdi-chevron-right</v-icon>
-              </template>
-            </v-list-item>
 
             <v-list-item @click="router.push('/explore')">
               <template v-slot:prepend>
@@ -122,32 +93,12 @@
                 <v-icon>mdi-chevron-right</v-icon>
               </template>
             </v-list-item>
-
-            <v-list-item @click="() => {}">
-              <template v-slot:prepend>
-                <v-icon>mdi-download-outline</v-icon>
-              </template>
-              <v-list-item-title>Export Data</v-list-item-title>
-              <template v-slot:append>
-                <v-icon>mdi-chevron-right</v-icon>
-              </template>
-            </v-list-item>
           </v-list>
         </v-card>
 
         <v-card class="mb-4" color="surface" rounded="lg">
           <v-list bg-color="transparent">
             <v-list-subheader class="text-subtitle-2 font-weight-bold">SUPPORT</v-list-subheader>
-
-            <v-list-item @click="() => {}">
-              <template v-slot:prepend>
-                <v-icon>mdi-help-circle-outline</v-icon>
-              </template>
-              <v-list-item-title>Help & Support</v-list-item-title>
-              <template v-slot:append>
-                <v-icon>mdi-chevron-right</v-icon>
-              </template>
-            </v-list-item>
 
             <v-list-item @click="() => {}">
               <template v-slot:prepend>

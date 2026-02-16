@@ -86,26 +86,37 @@ export async function getStats(userId: string) {
 		});
 	}
 
+	// FIXED: nutriScoreDistribution logic
+	// Get all scanned products with their nutriscore grades
 	const distributionScans = await prisma.scannedProduct.findMany({
 		where: {
 			userId: parsedUserId,
-			product: { nutriscoreGrade: { not: null } },
 		},
 		select: {
 			product: {
 				select: {
 					nutriscoreGrade: true,
+					barcode: true,
 				},
 			},
 		},
 	});
 
-	const gradeCounts = new Map<string, number>();
+	// Deduplicate by barcode (count each unique product only once)
+	const uniqueProducts = new Map<string, string>();
 	for (const scan of distributionScans) {
-		const grade = scan.product.nutriscoreGrade;
-		if (!grade) {
-			continue;
+		const barcode = scan.product.barcode;
+		const grade = scan.product.nutriscoreGrade?.toUpperCase();
+
+		// Only add if grade is valid and product not already counted
+		if (grade && ['A', 'B', 'C', 'D', 'E'].includes(grade) && !uniqueProducts.has(barcode)) {
+			uniqueProducts.set(barcode, grade);
 		}
+	}
+
+	// Count grades
+	const gradeCounts = new Map<string, number>();
+	for (const grade of uniqueProducts.values()) {
 		gradeCounts.set(grade, (gradeCounts.get(grade) ?? 0) + 1);
 	}
 
