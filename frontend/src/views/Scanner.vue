@@ -516,12 +516,29 @@ const getNutriScoreColor = (grade: string) => {
 </script>
 
 <style scoped>
+/*
+ * Scanner: position: fixed macht den View zu einem echten Fullscreen-Layer
+ * der völlig unabhängig vom normalen Scroll-Flow ist.
+ * Das ist robuster als height: 100vh alleine, weil Vuetify's v-main
+ * keinen Einfluss mehr hat.
+ */
 .scanner-container {
-  height: 100vh;
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
   background: #000;
-  position: relative;
   overflow: hidden;
+  /* Vuetify container resets */
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: 100% !important;
+  z-index: 10; /* above bottom nav during scanner view */
 }
+
 .camera-loading {
   position: absolute;
   inset: 0;
@@ -533,12 +550,17 @@ const getNutriScoreColor = (grade: string) => {
 }
 .loading-content { text-align: center; padding: 32px; }
 .opacity-70 { opacity: 0.7; }
+
 .scanner-header-gradient {
   position: absolute;
   top: 0; left: 0; right: 0;
   z-index: 100;
   background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.4) 70%, transparent 100%);
-  padding: 16px 20px 40px;
+  /* iOS safe-area support for notch */
+  padding-top: max(env(safe-area-inset-top, 0px), 16px);
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 40px;
   pointer-events: none;
 }
 .header-content {
@@ -547,8 +569,21 @@ const getNutriScoreColor = (grade: string) => {
   align-items: center;
   pointer-events: auto;
 }
-.scanner-view { height: 100vh; width: 100vw; position: relative; overflow: hidden; }
-.scanner-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+
+.scanner-view {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.scanner-video {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
 .scan-frame {
   position: absolute;
   top: 50%; left: 50%;
@@ -561,6 +596,7 @@ const getNutriScoreColor = (grade: string) => {
 .frame-corner.top-right   { top: -3px; right: -3px;  border-width: 5px 5px 0 0; border-radius: 0 24px 0 0; }
 .frame-corner.bottom-left { bottom: -3px; left: -3px; border-width: 0 0 5px 5px; border-radius: 0 0 0 24px; }
 .frame-corner.bottom-right { bottom: -3px; right: -3px; border-width: 0 5px 5px 0; border-radius: 0 0 24px 0; }
+
 .scanner-line {
   position: absolute; top: 0; left: 0; right: 0; height: 3px;
   background: linear-gradient(90deg, transparent 0%, #4caf50 50%, transparent 100%);
@@ -574,6 +610,7 @@ const getNutriScoreColor = (grade: string) => {
   90% { opacity: 1; }
   50% { top: calc(100% - 3px); }
 }
+
 .product-preview {
   position: absolute; bottom: 220px; left: 24px; right: 24px;
   cursor: pointer;
@@ -585,18 +622,24 @@ const getNutriScoreColor = (grade: string) => {
   box-shadow: 0 8px 32px rgba(0,0,0,0.5);
 }
 .error-preview { border: 1px solid rgba(244,67,54,0.3) !important; cursor: default !important; }
+
 .analyzing-overlay {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
   background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 9;
 }
 .analyzing-card { backdrop-filter: blur(20px); border: 1px solid rgba(76,175,80,0.2); }
+
 .scanner-controls {
-  position: absolute; bottom: 100px; left: 0; right: 0;
+  position: absolute;
+  /* iOS safe-area for home indicator */
+  bottom: max(env(safe-area-inset-bottom, 0px), 100px);
+  left: 0; right: 0;
   display: flex; justify-content: center; align-items: center;
   gap: 40px; padding: 20px; z-index: 10;
 }
 .capture-btn { box-shadow: 0 8px 24px rgba(76,175,80,0.5) !important; transition: all 0.3s ease; }
+
 .history-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.75);
@@ -614,6 +657,7 @@ const getNutriScoreColor = (grade: string) => {
 }
 .history-item { border-radius: 12px; margin: 4px 8px; transition: background-color 0.2s; }
 .history-item:hover { background-color: rgba(255,255,255,0.05); }
+
 .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease; }
 .slide-up-enter-from, .slide-up-leave-to { transform: scale(0.95); opacity: 0; }
 .fade-enter-active, .fade-leave-active { transition: opacity 0.4s ease; }
