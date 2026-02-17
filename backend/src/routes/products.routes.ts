@@ -18,7 +18,7 @@ import { authMiddleware } from '../middleware/auth';
 
 export const publicProductsRoutes = new Hono();
 
-publicProductsRoutes.get('/:barcode', getProduct);
+publicProductsRoutes.get('/:barcode{\\d{8,14}}', getProduct);
 
 export const protectedProductsRoutes = new Hono();
 
