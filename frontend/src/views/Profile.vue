@@ -1,13 +1,10 @@
 <template>
   <div class="profile-wrapper">
     <v-container class="profile-container pa-4">
-      <!-- Header with Settings -->
+      <!-- Header -->
       <v-row class="mb-4">
         <v-col cols="12" class="d-flex justify-space-between align-center">
           <h1 class="text-h4 font-weight-bold">Profile</h1>
-          <v-btn icon variant="text" @click="toggleTheme">
-            <v-icon>{{ isDark ? 'mdi-white-balance-sunny' : 'mdi-weather-night' }}</v-icon>
-          </v-btn>
         </v-col>
       </v-row>
 
@@ -22,9 +19,7 @@
         <v-card class="mb-4" color="surface" rounded="lg">
           <v-card-text class="text-center pa-6">
             <v-avatar size="100" color="primary" class="mb-4">
-              <span class="text-h3 font-weight-bold">
-                {{ userInitials }}
-              </span>
+              <span class="text-h3 font-weight-bold">{{ userInitials }}</span>
             </v-avatar>
             <h2 class="text-h5 font-weight-bold mb-1">{{ fullName }}</h2>
             <p class="text-body-2 text-medium-emphasis mb-4">{{ userEmail }}</p>
@@ -62,28 +57,32 @@
           </v-col>
         </v-row>
 
-        <!-- Settings Sections -->
+        <!-- Preferences -->
         <v-card class="mb-4" color="surface" rounded="lg">
           <v-list bg-color="transparent">
             <v-list-subheader class="text-subtitle-2 font-weight-bold">PREFERENCES</v-list-subheader>
-
             <v-list-item>
               <template v-slot:prepend>
                 <v-icon>{{ isDark ? 'mdi-weather-night' : 'mdi-white-balance-sunny' }}</v-icon>
               </template>
               <v-list-item-title>Dark Mode</v-list-item-title>
               <template v-slot:append>
-                <v-switch v-model="isDark" @change="toggleTheme" color="primary" hide-details inset></v-switch>
+                <v-switch
+                    :model-value="isDark"
+                    @update:model-value="toggleTheme"
+                    color="primary"
+                    hide-details
+                    inset
+                />
               </template>
             </v-list-item>
-
           </v-list>
         </v-card>
 
+        <!-- Account -->
         <v-card class="mb-4" color="surface" rounded="lg">
           <v-list bg-color="transparent">
             <v-list-subheader class="text-subtitle-2 font-weight-bold">ACCOUNT</v-list-subheader>
-
             <v-list-item @click="router.push('/explore')">
               <template v-slot:prepend>
                 <v-icon>mdi-history</v-icon>
@@ -96,11 +95,11 @@
           </v-list>
         </v-card>
 
+        <!-- Support -->
         <v-card class="mb-4" color="surface" rounded="lg">
           <v-list bg-color="transparent">
             <v-list-subheader class="text-subtitle-2 font-weight-bold">SUPPORT</v-list-subheader>
-
-            <v-list-item @click="() => {}">
+            <v-list-item>
               <template v-slot:prepend>
                 <v-icon>mdi-information-outline</v-icon>
               </template>
@@ -109,7 +108,6 @@
                 <span class="text-caption text-medium-emphasis">v1.0.0</span>
               </template>
             </v-list-item>
-
             <v-list-item @click="handleLogout" class="text-error">
               <template v-slot:prepend>
                 <v-icon color="error">mdi-logout</v-icon>
@@ -127,71 +125,24 @@
         <v-card-title class="text-h5 font-weight-bold">Profil bearbeiten</v-card-title>
         <v-card-text>
           <v-form ref="editForm">
-            <v-text-field
-                v-model="editData.firstname"
-                label="Vorname"
-                variant="outlined"
-                prepend-inner-icon="mdi-account"
-                class="mb-3"
-            />
-            <v-text-field
-                v-model="editData.lastname"
-                label="Nachname"
-                variant="outlined"
-                prepend-inner-icon="mdi-account"
-                class="mb-3"
-            />
-            <v-text-field
-                v-model="editData.email"
-                label="Email"
-                type="email"
-                variant="outlined"
-                prepend-inner-icon="mdi-email"
-                class="mb-3"
-            />
-            <v-text-field
-                v-model="editData.password"
-                label="Neues Passwort (optional)"
-                type="password"
-                variant="outlined"
-                prepend-inner-icon="mdi-lock"
-                hint="Leer lassen um aktuelles Passwort zu behalten"
-                persistent-hint
-            />
+            <v-text-field v-model="editData.firstname" label="Vorname" variant="outlined" prepend-inner-icon="mdi-account" class="mb-3" />
+            <v-text-field v-model="editData.lastname"  label="Nachname" variant="outlined" prepend-inner-icon="mdi-account" class="mb-3" />
+            <v-text-field v-model="editData.email"     label="Email" type="email" variant="outlined" prepend-inner-icon="mdi-email" class="mb-3" />
+            <v-text-field v-model="editData.password"  label="Neues Passwort (optional)" type="password" variant="outlined" prepend-inner-icon="mdi-lock" hint="Leer lassen um aktuelles Passwort zu behalten" persistent-hint />
           </v-form>
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn variant="text" @click="editDialog = false">Abbrechen</v-btn>
-          <v-btn
-              color="primary"
-              variant="flat"
-              @click="saveProfile"
-              :loading="saving"
-          >
-            Speichern
-          </v-btn>
+          <v-btn color="primary" variant="flat" :loading="saving" @click="saveProfile">Speichern</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <!-- Success Snackbar -->
-    <v-snackbar
-        v-model="successSnackbar"
-        :timeout="3000"
-        color="success"
-        location="top"
-    >
+    <v-snackbar v-model="successSnackbar" :timeout="3000" color="success" location="top">
       Profil erfolgreich aktualisiert!
     </v-snackbar>
-
-    <!-- Error Snackbar -->
-    <v-snackbar
-        v-model="errorSnackbar"
-        :timeout="3000"
-        color="error"
-        location="top"
-    >
+    <v-snackbar v-model="errorSnackbar" :timeout="3000" color="error" location="top">
       {{ errorMessage }}
     </v-snackbar>
   </div>
@@ -204,113 +155,95 @@ import { useTheme } from 'vuetify'
 import { useAuthStore } from '@/stores/auth'
 import { authAPI } from '@/services/api'
 
-const router = useRouter()
-const theme = useTheme()
+const THEME_KEY = 'nutriscan-theme'
+
+const router    = useRouter()
+const theme     = useTheme()
 const authStore = useAuthStore()
 
-const isDark = ref(theme.global.name.value === 'dark')
-const isLoading = ref(true)
-const notificationsEnabled = ref(true)
-const offlineModeEnabled = ref(false)
-const editDialog = ref(false)
-const saving = ref(false)
-const successSnackbar = ref(false)
-const errorSnackbar = ref(false)
-const errorMessage = ref('')
+const savedTheme = localStorage.getItem(THEME_KEY) ?? 'light'
+theme.change(savedTheme)                          // ← correct Vuetify 3 API
+const isDark = ref(savedTheme === 'dark')
 
-const editData = ref({
-  firstname: '',
-  lastname: '',
-  email: '',
-  password: ''
-})
+function toggleTheme() {
+  const next = isDark.value ? 'light' : 'dark'
+  theme.change(next)                              // ← correct Vuetify 3 API
+  isDark.value = !isDark.value
+  localStorage.setItem(THEME_KEY, next)           // ← persist
+}
+
+const isLoading       = ref(true)
+const editDialog      = ref(false)
+const saving          = ref(false)
+const successSnackbar = ref(false)
+const errorSnackbar   = ref(false)
+const errorMessage    = ref('')
+
+const editData = ref({ firstname: '', lastname: '', email: '', password: '' })
 
 const stats = ref({
   totalScans: 0,
   totalFavorites: 0,
   healthScoreTrend: [] as Array<{ date: string; score: number | null }>,
-  nutriScoreDistribution: [] as Array<{ grade: string; count: number; percent: number }>
+  nutriScoreDistribution: [] as Array<{ grade: string; count: number; percent: number }>,
 })
 
 const userInitials = computed(() => {
   if (!authStore.user) return '?'
   const first = authStore.user.firstname?.[0] || ''
-  const last = authStore.user.lastname?.[0] || ''
+  const last  = authStore.user.lastname?.[0]  || ''
   return (first + last).toUpperCase() || authStore.user.email?.[0].toUpperCase() || '?'
 })
 
-const fullName = computed(() => {
-  if (!authStore.user) return 'User'
-  return `${authStore.user.firstname || ''} ${authStore.user.lastname || ''}`.trim() || 'User'
-})
-
+const fullName  = computed(() => `${authStore.user?.firstname || ''} ${authStore.user?.lastname || ''}`.trim() || 'User')
 const userEmail = computed(() => authStore.user?.email || 'user@example.com')
 
-const calculateStreak = () => {
+function calculateStreak(): number {
   const trend = stats.value.healthScoreTrend
-  if (trend.length === 0) return 0
-
-  // Count consecutive days with scans (non-null scores)
-  let streak = 0
+  let streak  = 0
   for (let i = trend.length - 1; i >= 0; i--) {
-    if (trend[i].score !== null) {
-      streak++
-    } else {
-      break
-    }
+    if (trend[i].score !== null) streak++
+    else break
   }
   return streak
 }
 
-const toggleTheme = () => {
-  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
-  isDark.value = !isDark.value
-}
-
-const handleLogout = () => {
-  authStore.logout()
-  router.push('/login')
-}
-
-// Watch edit dialog to populate form
-watch(editDialog, (newVal) => {
-  if (newVal && authStore.user) {
+watch(editDialog, (open) => {
+  if (open && authStore.user) {
     editData.value = {
       firstname: authStore.user.firstname,
-      lastname: authStore.user.lastname,
-      email: authStore.user.email,
-      password: ''
+      lastname:  authStore.user.lastname,
+      email:     authStore.user.email,
+      password:  '',
     }
   }
 })
 
-const saveProfile = async () => {
+function handleLogout() {
+  authStore.logout()
+  router.push('/login')
+}
+
+async function saveProfile() {
   saving.value = true
-
   try {
-    const updateData: any = {
+    const payload: any = {
       firstname: editData.value.firstname,
-      lastname: editData.value.lastname,
-      email: editData.value.email,
+      lastname:  editData.value.lastname,
+      email:     editData.value.email,
     }
+    if (editData.value.password) payload.password = editData.value.password
 
-    // Only include password if provided
-    if (editData.value.password) {
-      updateData.password = editData.value.password
-    }
-
-    const success = await authStore.updateProfile(updateData)
-
+    const success = await authStore.updateProfile(payload)
     if (success) {
-      editDialog.value = false
+      editDialog.value      = false
       successSnackbar.value = true
     } else {
-      errorMessage.value = authStore.error || 'Update fehlgeschlagen'
+      errorMessage.value  = authStore.error || 'Update fehlgeschlagen'
       errorSnackbar.value = true
     }
   } catch (err: any) {
-    console.error('Failed to update profile:', err)
-    errorMessage.value = err.message || 'Update fehlgeschlagen'
+    errorMessage.value  = err.message || 'Update fehlgeschlagen'
     errorSnackbar.value = true
   } finally {
     saving.value = false
@@ -319,12 +252,10 @@ const saveProfile = async () => {
 
 onMounted(async () => {
   try {
-    const statsData = await authAPI.getStats()
-    if (statsData) {
-      stats.value = statsData
-    }
-  } catch (error) {
-    console.error('Fehler beim Laden der Stats:', error)
+    const data = await authAPI.getStats()
+    if (data) stats.value = data
+  } catch (e) {
+    console.error('Fehler beim Laden der Stats:', e)
   } finally {
     isLoading.value = false
   }
@@ -332,14 +263,12 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Wrapper with proper height and scrolling */
 .profile-wrapper {
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 80px; /* Space for bottom nav */
+  padding-bottom: 80px;
 }
-
 .profile-container {
   max-width: 600px;
   margin: 0 auto;

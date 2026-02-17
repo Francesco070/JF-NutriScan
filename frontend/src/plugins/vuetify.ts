@@ -3,6 +3,8 @@ import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import { aliases, mdi } from 'vuetify/iconsets/mdi'
 
+const THEME_KEY = 'nutriscan-theme'
+
 export default createVuetify({
     components,
     directives,
@@ -46,7 +48,7 @@ export default createVuetify({
     },
 
     theme: {
-        defaultTheme: 'dark',
+        defaultTheme: (localStorage.getItem(THEME_KEY) ?? 'dark') as 'light' | 'dark',
         themes: {
             light: {
                 dark: false,
