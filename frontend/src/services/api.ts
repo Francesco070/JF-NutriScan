@@ -14,7 +14,6 @@ api.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`
         }
-        console.log('🌐 API Call:', config.url, { method: config.method?.toUpperCase() })
         return config
     },
     (error) => {
@@ -25,12 +24,10 @@ api.interceptors.request.use(
 // Response Interceptor - Handle 401 Errors
 api.interceptors.response.use(
     (response) => {
-        console.log('📡 Response status:', response.status)
         return response
     },
     (error: AxiosError) => {
         if (error.response?.status === 401) {
-            console.log('🔒 401 Unauthorized - Redirecting to login')
             const authStore = useAuthStore()
             authStore.logout()
 
@@ -55,10 +52,8 @@ async function apiCall<T>(
             url,
             data,
         })
-        console.log('✅ Response data:', response.data)
         return response.data
     } catch (error: any) {
-        console.error('❌ API Error:', error.response?.data || error.message)
         if (error.response?.status === 404) {
             throw new Error('Api error. Try again later.')
         }

@@ -263,7 +263,6 @@ const handleRegister = async () => {
   })
 
   if (success) {
-    console.log('✅ Registration successful - redirecting to home')
     await router.push('/')
   }
 }

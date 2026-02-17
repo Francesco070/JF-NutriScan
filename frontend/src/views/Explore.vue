@@ -248,7 +248,6 @@ async function loadFavorites() {
     const data = await productsAPI.getFavorites()
     favorites.value = Array.isArray(data) ? data : []
   } catch (e: any) {
-    console.error('Failed to load favorites:', e)
     favoritesError.value = e?.message || 'Failed to load favorites. Please try again.'
     favorites.value = []
   } finally {

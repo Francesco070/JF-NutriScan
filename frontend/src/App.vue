@@ -33,8 +33,7 @@ onMounted(async () => {
   await authStore.initAuth()
 
   if (import.meta.env.DEV) {
-    console.log('🚀 NutriScan Frontend gestartet')
-    console.log('📡 API Base URL:', API_CONFIG.baseUrl)
+    console.log('API Base URL:', API_CONFIG.baseUrl)
   }
 })
 </script>

@@ -23,23 +23,18 @@ export const useAuthStore = defineStore('auth', () => {
     const setAuthToken = (newToken: string) => {
         token.value = newToken
         localStorage.setItem('auth_token', newToken)
-        console.log('🔑 Auth token set')
     }
 
     const removeAuthToken = () => {
         token.value = null
         user.value = null
         localStorage.removeItem('auth_token')
-        console.log('🔑 Auth token removed')
     }
 
     const fetchUser = async () => {
         try {
-            console.log('👤 Fetching user profile...')
             user.value = await authAPI.me()
-            console.log('✅ User profile loaded:', user.value)
         } catch (err) {
-            console.error('❌ Error fetching user:', err)
             removeAuthToken()
             throw err
         }
@@ -48,14 +43,10 @@ export const useAuthStore = defineStore('auth', () => {
     const initAuth = async () => {
         if (isInitialized.value) return
 
-        console.log('🔐 Initializing auth...')
-
         if (token.value) {
             try {
                 await fetchUser()
-                console.log('✅ Auth initialized with existing token')
             } catch (err) {
-                console.error('❌ Token validation failed')
                 removeAuthToken()
             }
         }
@@ -68,14 +59,11 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = null
 
         try {
-            console.log('🔐 Logging in...')
             const response = await authAPI.login({ email, password })
             setAuthToken(response.token)
             await fetchUser()
-            console.log('✅ Login successful')
             return true
         } catch (err: any) {
-            console.error('❌ Login failed:', err)
             error.value = err.message || 'Login fehlgeschlagen'
             return false
         } finally {
@@ -93,13 +81,10 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = null
 
         try {
-            console.log('📝 Registering...')
             await authAPI.register(userData)
-            console.log('✅ Registration successful')
             // Auto-login after registration
             return await login(userData.email, userData.password)
         } catch (err: any) {
-            console.error('❌ Registration failed:', err)
             error.value = err.message || 'Registrierung fehlgeschlagen'
             return false
         } finally {
@@ -117,13 +102,10 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = null
 
         try {
-            console.log('📝 Updating profile...')
             await authAPI.updateProfile(userData)
             await fetchUser() // Reload user data
-            console.log('✅ Profile updated')
             return true
         } catch (err: any) {
-            console.error('❌ Update failed:', err)
             error.value = err.message || 'Update fehlgeschlagen'
             return false
         } finally {
@@ -132,7 +114,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     const logout = () => {
-        console.log('👋 Logging out...')
         removeAuthToken()
     }
 

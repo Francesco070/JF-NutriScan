@@ -343,7 +343,6 @@ onMounted(async () => {
     })
     if (videoElement.value) videoElement.value.srcObject = stream
   } catch (err) {
-    console.error('Kamera-Zugriff fehlgeschlagen:', err)
     cameraReady.value = true
   }
 })
