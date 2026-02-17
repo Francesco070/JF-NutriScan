@@ -10,7 +10,7 @@
               class="mx-auto"
           />
           <h1 class="text-h3 mt-4 mb-2">NutriScan</h1>
-          <p class="text-body-1 text-grey">Willkommen zurück!</p>
+          <p class="text-body-1 text-grey">Welcome back!</p>
         </div>
 
         <v-card color="background" elevation="0">
@@ -33,7 +33,7 @@
               <!-- Password Field -->
               <v-text-field
                   v-model="password"
-                  label="Passwort"
+                  label="Password"
                   :type="showPassword ? 'text' : 'password'"
                   prepend-inner-icon="mdi-lock-outline"
                   :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
@@ -66,7 +66,7 @@
                   :loading="authStore.isLoading"
                   class="mb-4"
               >
-                Anmelden
+                Sign In
               </v-btn>
 
               <!-- Divider -->
@@ -75,7 +75,7 @@
               <!-- Register Link -->
               <div class="text-center">
                 <p class="text-body-2 text-grey mb-2">
-                  Noch kein Konto?
+                  Don't have an account yet?
                 </p>
                 <v-btn
                     variant="outlined"
@@ -84,7 +84,7 @@
                     block
                     @click="router.push('/register')"
                 >
-                  Jetzt registrieren
+                  Create an account
                 </v-btn>
               </div>
             </v-form>
@@ -111,43 +111,40 @@ const passwordError = ref('')
 
 // Validation Rules
 const emailRules = [
-  (v: string) => !!v || 'Email ist erforderlich',
-  (v: string) => /.+@.+\..+/.test(v) || 'Email muss gültig sein',
+  (v: string) => !!v || 'Email is required',
+  (v: string) => /.+@.+\..+/.test(v) || 'Email must be valid',
 ]
 
 const passwordRules = [
-  (v: string) => !!v || 'Passwort ist erforderlich',
-  (v: string) => v.length >= 6 || 'Passwort muss mindestens 6 Zeichen lang sein',
+  (v: string) => !!v || 'Password is required',
+  (v: string) => v.length >= 6 || 'Password must be at least 6 characters',
 ]
 
 const handleLogin = async () => {
-  // Reset errors
   emailError.value = ''
   passwordError.value = ''
 
-  // Validate
   if (!email.value) {
-    emailError.value = 'Email ist erforderlich'
+    emailError.value = 'Email is required'
     return
   }
   if (!/.+@.+\..+/.test(email.value)) {
-    emailError.value = 'Email muss gültig sein'
+    emailError.value = 'Email must be valid'
     return
   }
   if (!password.value) {
-    passwordError.value = 'Passwort ist erforderlich'
+    passwordError.value = 'Password is required'
     return
   }
   if (password.value.length < 6) {
-    passwordError.value = 'Passwort muss mindestens 6 Zeichen lang sein'
+    passwordError.value = 'Password must be at least 6 characters'
     return
   }
 
-  // Login
   const success = await authStore.login(email.value, password.value)
 
   if (success) {
-    console.log('✅ Login erfolgreich - Redirect zu Home')
+    console.log('✅ Login successful - redirecting to home')
     await router.push('/')
   }
 }

@@ -10,7 +10,7 @@
               class="mx-auto"
           />
           <h1 class="text-h3 mt-4 mb-2">NutriScan</h1>
-          <p class="text-body-1 text-grey">Erstelle dein Konto</p>
+          <p class="text-body-1 text-grey">Create your account</p>
         </div>
 
         <v-card color="background" elevation="0">
@@ -19,7 +19,7 @@
               <!-- First Name Field -->
               <v-text-field
                   v-model="firstname"
-                  label="Vorname"
+                  label="First Name"
                   type="text"
                   prepend-inner-icon="mdi-account-outline"
                   variant="outlined"
@@ -33,7 +33,7 @@
               <!-- Last Name Field -->
               <v-text-field
                   v-model="lastname"
-                  label="Nachname"
+                  label="Last Name"
                   type="text"
                   prepend-inner-icon="mdi-account-outline"
                   variant="outlined"
@@ -61,7 +61,7 @@
               <!-- Password Field -->
               <v-text-field
                   v-model="password"
-                  label="Passwort"
+                  label="Password"
                   :type="showPassword ? 'text' : 'password'"
                   prepend-inner-icon="mdi-lock-outline"
                   :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
@@ -75,7 +75,7 @@
               >
                 <template v-slot:details>
                   <div class="text-caption text-grey mt-1">
-                    Mindestens 6 Zeichen
+                    At least 6 characters
                   </div>
                 </template>
               </v-text-field>
@@ -83,7 +83,7 @@
               <!-- Confirm Password Field -->
               <v-text-field
                   v-model="confirmPassword"
-                  label="Passwort bestätigen"
+                  label="Confirm Password"
                   :type="showConfirmPassword ? 'text' : 'password'"
                   prepend-inner-icon="mdi-lock-check-outline"
                   :append-inner-icon="showConfirmPassword ? 'mdi-eye-off' : 'mdi-eye'"
@@ -116,7 +116,7 @@
                   :loading="authStore.isLoading"
                   class="mb-4"
               >
-                Registrieren
+                Create Account
               </v-btn>
 
               <!-- Divider -->
@@ -125,7 +125,7 @@
               <!-- Login Link -->
               <div class="text-center">
                 <p class="text-body-2 text-grey mb-2">
-                  Bereits ein Konto?
+                  Already have an account?
                 </p>
                 <v-btn
                     variant="outlined"
@@ -134,7 +134,7 @@
                     block
                     @click="router.push('/login')"
                 >
-                  Jetzt anmelden
+                  Sign in
                 </v-btn>
               </div>
             </v-form>
@@ -169,99 +169,92 @@ const confirmPasswordError = ref('')
 
 // Validation Rules
 const firstNameRules = [
-  (v: string) => !!v || 'Vorname ist erforderlich',
-  (v: string) => v.length >= 2 || 'Vorname muss mindestens 2 Zeichen lang sein',
-  (v: string) => /^[a-zA-ZäöüÄÖÜß\s-]+$/.test(v) || 'Vorname darf nur Buchstaben enthalten',
+  (v: string) => !!v || 'First name is required',
+  (v: string) => v.length >= 2 || 'First name must be at least 2 characters',
+  (v: string) => /^[a-zA-ZäöüÄÖÜß\s-]+$/.test(v) || 'First name may only contain letters',
 ]
 
 const lastNameRules = [
-  (v: string) => !!v || 'Nachname ist erforderlich',
-  (v: string) => v.length >= 2 || 'Nachname muss mindestens 2 Zeichen lang sein',
-  (v: string) => /^[a-zA-ZäöüÄÖÜß\s-]+$/.test(v) || 'Nachname darf nur Buchstaben enthalten',
+  (v: string) => !!v || 'Last name is required',
+  (v: string) => v.length >= 2 || 'Last name must be at least 2 characters',
+  (v: string) => /^[a-zA-ZäöüÄÖÜß\s-]+$/.test(v) || 'Last name may only contain letters',
 ]
 
 const emailRules = [
-  (v: string) => !!v || 'Email ist erforderlich',
-  (v: string) => /.+@.+\..+/.test(v) || 'Email muss gültig sein',
+  (v: string) => !!v || 'Email is required',
+  (v: string) => /.+@.+\..+/.test(v) || 'Email must be valid',
 ]
 
 const passwordRules = [
-  (v: string) => !!v || 'Passwort ist erforderlich',
-  (v: string) => v.length >= 6 || 'Passwort muss mindestens 6 Zeichen lang sein',
+  (v: string) => !!v || 'Password is required',
+  (v: string) => v.length >= 6 || 'Password must be at least 6 characters',
 ]
 
 const confirmPasswordRules = [
-  (v: string) => !!v || 'Passwortbestätigung ist erforderlich',
-  (v: string) => v === password.value || 'Passwörter stimmen nicht überein',
+  (v: string) => !!v || 'Please confirm your password',
+  (v: string) => v === password.value || 'Passwords do not match',
 ]
 
 const handleRegister = async () => {
-  // Reset errors
   firstNameError.value = ''
   lastNameError.value = ''
   emailError.value = ''
   passwordError.value = ''
   confirmPasswordError.value = ''
 
-  // Validate First Name
   if (!firstname.value) {
-    firstNameError.value = 'Vorname ist erforderlich'
+    firstNameError.value = 'First name is required'
     return
   }
   if (firstname.value.length < 2) {
-    firstNameError.value = 'Vorname muss mindestens 2 Zeichen lang sein'
+    firstNameError.value = 'First name must be at least 2 characters'
     return
   }
   if (!/^[a-zA-ZäöüÄÖÜß\s-]+$/.test(firstname.value)) {
-    firstNameError.value = 'Vorname darf nur Buchstaben enthalten'
+    firstNameError.value = 'First name may only contain letters'
     return
   }
 
-  // Validate Last Name
   if (!lastname.value) {
-    lastNameError.value = 'Nachname ist erforderlich'
+    lastNameError.value = 'Last name is required'
     return
   }
   if (lastname.value.length < 2) {
-    lastNameError.value = 'Nachname muss mindestens 2 Zeichen lang sein'
+    lastNameError.value = 'Last name must be at least 2 characters'
     return
   }
   if (!/^[a-zA-ZäöüÄÖÜß\s-]+$/.test(lastname.value)) {
-    lastNameError.value = 'Nachname darf nur Buchstaben enthalten'
+    lastNameError.value = 'Last name may only contain letters'
     return
   }
 
-  // Validate Email
   if (!email.value) {
-    emailError.value = 'Email ist erforderlich'
+    emailError.value = 'Email is required'
     return
   }
   if (!/.+@.+\..+/.test(email.value)) {
-    emailError.value = 'Email muss gültig sein'
+    emailError.value = 'Email must be valid'
     return
   }
 
-  // Validate Password
   if (!password.value) {
-    passwordError.value = 'Passwort ist erforderlich'
+    passwordError.value = 'Password is required'
     return
   }
   if (password.value.length < 6) {
-    passwordError.value = 'Passwort muss mindestens 6 Zeichen lang sein'
+    passwordError.value = 'Password must be at least 6 characters'
     return
   }
 
-  // Validate Confirm Password
   if (!confirmPassword.value) {
-    confirmPasswordError.value = 'Passwortbestätigung ist erforderlich'
+    confirmPasswordError.value = 'Please confirm your password'
     return
   }
   if (password.value !== confirmPassword.value) {
-    confirmPasswordError.value = 'Passwörter stimmen nicht überein'
+    confirmPasswordError.value = 'Passwords do not match'
     return
   }
 
-  // Register
   const success = await authStore.register({
     firstname: firstname.value,
     lastname: lastname.value,
@@ -270,7 +263,7 @@ const handleRegister = async () => {
   })
 
   if (success) {
-    console.log('✅ Registrierung erfolgreich - Redirect zu Home')
+    console.log('✅ Registration successful - redirecting to home')
     await router.push('/')
   }
 }

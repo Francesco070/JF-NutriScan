@@ -11,7 +11,7 @@
               width="6"
           />
 
-          <p class="mt-6 text-h6">Produkt wird geladen...</p>
+          <p class="mt-6 text-h6">Loading product...</p>
 
           <p class="text-body-2 text-grey mt-2">
             Barcode: {{ route.params.barcode }}
@@ -40,7 +40,7 @@
               class="mt-6"
               @click="router.push('/scanner')"
           >
-            Erneut scannen
+            Scan again
           </v-btn>
         </div>
       </v-col>
@@ -48,17 +48,17 @@
 
     <!-- Product Content -->
     <div v-else-if="product">
-      <!-- Header mit Bild -->
+      <!-- Header with image -->
       <v-row>
         <v-col cols="12">
           <v-card color="background" elevation="0">
             <v-row no-gutters>
-              <!-- Produkt Bild -->
+              <!-- Product Image -->
               <v-col cols="12" md="4" class="d-flex align-center justify-center pa-4">
                 <v-img
                     v-if="product.imageUrl"
                     :src="product.imageUrl"
-                    :alt="product.name || 'Produkt'"
+                    :alt="product.name || 'Product'"
                     max-width="300"
                     max-height="300"
                     contain
@@ -74,7 +74,7 @@
                 </v-avatar>
               </v-col>
 
-              <!-- Produkt Info -->
+              <!-- Product Info -->
               <v-col cols="12" md="8">
                 <v-card-text>
                   <!-- Nutri-Score Badge -->
@@ -88,9 +88,9 @@
                     Nutri-Score: {{ product.nutriscore.grade.toUpperCase() }}
                   </v-chip>
 
-                  <!-- Produktname -->
+                  <!-- Product Name -->
                   <h1 class="text-h4 mb-3">
-                    {{ product.name || 'Unbekanntes Produkt' }}
+                    {{ product.name || 'Unknown Product' }}
                   </h1>
 
                   <!-- Action Buttons -->
@@ -102,7 +102,7 @@
                         :loading="favoriteLoading"
                         variant="flat"
                     >
-                      {{ isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen' }}
+                      {{ isFavorite ? 'Remove from favorites' : 'Add to favorites' }}
                     </v-btn>
 
                     <v-btn
@@ -112,11 +112,11 @@
                         :loading="historyLoading"
                         variant="flat"
                     >
-                      Zur Historie hinzufügen
+                      Add to history
                     </v-btn>
                   </div>
 
-                  <!-- Marke -->
+                  <!-- Brand -->
                   <p v-if="product.brand" class="text-h6 text-grey-darken-1 mb-3">
                     {{ product.brand }}
                   </p>
@@ -127,7 +127,7 @@
                     {{ product.barcode }}
                   </v-chip>
 
-                  <!-- Kategorien -->
+                  <!-- Categories -->
                   <div v-if="product.categories" class="mb-3">
                     <v-chip
                         v-for="(category, index) in getCategoriesArray(product.categories)"
@@ -140,10 +140,10 @@
                     </v-chip>
                   </div>
 
-                  <!-- Portionsgröße -->
+                  <!-- Serving Size -->
                   <div v-if="product.serving?.size" class="text-body-1 mb-2">
                     <v-icon left color="primary">mdi-food-fork-drink</v-icon>
-                    Portionsgröße: <strong>{{ product.serving.size }}</strong>
+                    Serving size: <strong>{{ product.serving.size }}</strong>
                   </div>
                 </v-card-text>
               </v-col>
@@ -172,13 +172,13 @@
         {{ errorMessage }}
       </v-snackbar>
 
-      <!-- Nährwerte -->
+      <!-- Nutritional Values -->
       <v-row class="mt-4">
         <v-col cols="12">
           <v-card color="background" elevation="0">
             <v-card-title>
               <v-icon left>mdi-nutrition</v-icon>
-              Nährwerte pro {{ product.serving?.unitBasis || '100g' }}
+              Nutrition per {{ product.serving?.unitBasis || '100g' }}
             </v-card-title>
             <v-card-text>
               <v-row>
@@ -193,49 +193,49 @@
                   <div class="nutrient-card">
                     <v-icon color="blue" size="32">mdi-hamburger</v-icon>
                     <div class="text-h6 mt-2">{{ product.nutriments.proteins100g || 'N/A' }}</div>
-                    <div class="text-caption text-grey">g Eiweiß</div>
+                    <div class="text-caption text-grey">g Protein</div>
                   </div>
                 </v-col>
                 <v-col cols="6" md="3">
                   <div class="nutrient-card">
                     <v-icon color="green" size="32">mdi-barley</v-icon>
                     <div class="text-h6 mt-2">{{ product.nutriments.carbs100g || 'N/A' }}</div>
-                    <div class="text-caption text-grey">g Kohlenhydrate</div>
+                    <div class="text-caption text-grey">g Carbs</div>
                   </div>
                 </v-col>
                 <v-col cols="6" md="3">
                   <div class="nutrient-card">
                     <v-icon color="yellow-darken-2" size="32">mdi-oil</v-icon>
                     <div class="text-h6 mt-2">{{ product.nutriments.fat100g || 'N/A' }}</div>
-                    <div class="text-caption text-grey">g Fett</div>
+                    <div class="text-caption text-grey">g Fat</div>
                   </div>
                 </v-col>
                 <v-col cols="6" md="3">
                   <div class="nutrient-card">
                     <v-icon color="pink-lighten-2" size="32">mdi-spoon-sugar</v-icon>
                     <div class="text-h6 mt-2">{{ product.nutriments.sugars100g || 'N/A' }}</div>
-                    <div class="text-caption text-grey">g Zucker</div>
+                    <div class="text-caption text-grey">g Sugar</div>
                   </div>
                 </v-col>
                 <v-col cols="6" md="3">
                   <div class="nutrient-card">
                     <v-icon color="grey-lighten-1" size="32">mdi-shaker-outline</v-icon>
                     <div class="text-h6 mt-2">{{ product.nutriments.salt100g || 'N/A' }}</div>
-                    <div class="text-caption text-grey">g Salz</div>
+                    <div class="text-caption text-grey">g Salt</div>
                   </div>
                 </v-col>
               </v-row>
 
-              <!-- Weitere Nährwerte -->
+              <!-- Additional Nutrients -->
               <v-divider class="my-4" />
 
               <v-row dense>
                 <v-col cols="6" md="4" v-if="product.nutriments.fiber100g">
-                  <div class="text-caption text-grey">Ballaststoffe</div>
+                  <div class="text-caption text-grey">Fiber</div>
                   <div class="text-body-1">{{ product.nutriments.fiber100g }} g</div>
                 </v-col>
                 <v-col cols="6" md="4" v-if="product.nutriments.saturatedFat100g">
-                  <div class="text-caption text-grey">Gesättigte Fettsäuren</div>
+                  <div class="text-caption text-grey">Saturated Fat</div>
                   <div class="text-body-1">{{ product.nutriments.saturatedFat100g }} g</div>
                 </v-col>
               </v-row>
@@ -244,7 +244,7 @@
         </v-col>
       </v-row>
 
-      <!-- Zutaten (COLLAPSIBLE) -->
+      <!-- Ingredients (COLLAPSIBLE) -->
       <v-row v-if="product.ingredients" class="mt-4">
         <v-col cols="12">
           <v-card color="background" elevation="0">
@@ -254,7 +254,7 @@
                 @click="ingredientsExpanded = !ingredientsExpanded"
             >
               <v-icon start>mdi-format-list-bulleted</v-icon>
-              Zutaten
+              Ingredients
 
               <v-spacer></v-spacer>
 
@@ -272,13 +272,13 @@
         </v-col>
       </v-row>
 
-      <!-- Allergene -->
+      <!-- Allergens -->
       <v-row v-if="product.allergens" class="mt-4">
         <v-col cols="12">
           <v-card color="background" elevation="0">
             <v-card-title>
               <v-icon left>mdi-alert</v-icon>
-              Allergene
+              Allergens
             </v-card-title>
             <v-card-text>
               <v-chip
@@ -294,21 +294,21 @@
         </v-col>
       </v-row>
 
-      <!-- Weitere Bilder (CLICKABLE FOR FULLSCREEN) -->
+      <!-- Additional Images (CLICKABLE FOR FULLSCREEN) -->
       <v-row v-if="product.imageIngredientsUrl || product.imageNutritionUrl" class="mt-4">
         <v-col cols="12" md="6" v-if="product.imageIngredientsUrl">
           <v-card color="background" elevation="0">
             <v-card-title>
               <v-icon left>mdi-image</v-icon>
-              Zutatenliste
+              Ingredients List
             </v-card-title>
             <v-img
                 :src="product.imageIngredientsUrl"
-                alt="Zutatenliste"
+                alt="Ingredients list"
                 aspect-ratio="1"
                 cover
                 style="cursor: pointer;"
-                @click="openImageDialog(product.imageIngredientsUrl, 'Zutatenliste')"
+                @click="openImageDialog(product.imageIngredientsUrl, 'Ingredients List')"
             />
           </v-card>
         </v-col>
@@ -316,15 +316,15 @@
           <v-card color="background" elevation="0">
             <v-card-title>
               <v-icon left>mdi-image</v-icon>
-              Nährwerttabelle
+              Nutrition Table
             </v-card-title>
             <v-img
                 :src="product.imageNutritionUrl"
-                alt="Nährwerttabelle"
+                alt="Nutrition table"
                 aspect-ratio="1"
                 cover
                 style="cursor: pointer;"
-                @click="openImageDialog(product.imageNutritionUrl, 'Nährwerttabelle')"
+                @click="openImageDialog(product.imageNutritionUrl, 'Nutrition Table')"
             />
           </v-card>
         </v-col>
@@ -384,22 +384,18 @@ const successMessage = ref('')
 const errorSnackbar = ref(false)
 const errorMessage = ref('')
 
-// Produkt aus dem Store
 const product = computed(() => productsStore.currentProduct)
 
-// Check if product is favorite
 const checkIfFavorite = async () => {
   if (!product.value) return
 
   try {
     isFavorite.value = await productsStore.checkFavorite(product.value.barcode)
-    console.log(`⭐ Favorite status: ${isFavorite.value}`)
   } catch (err) {
     console.error('Failed to check favorite status:', err)
   }
 }
 
-// Toggle favorite
 const toggleFavorite = async () => {
   if (!product.value) return
 
@@ -409,22 +405,21 @@ const toggleFavorite = async () => {
     if (isFavorite.value) {
       await productsStore.removeFromFavorites(product.value.barcode)
       isFavorite.value = false
-      successMessage.value = 'Aus Favoriten entfernt'
+      successMessage.value = 'Removed from favorites'
     } else {
       await productsStore.addToFavorites(product.value.barcode)
       isFavorite.value = true
-      successMessage.value = 'Zu Favoriten hinzugefügt'
+      successMessage.value = 'Added to favorites'
     }
     successSnackbar.value = true
   } catch (err: any) {
-    errorMessage.value = err.message || 'Fehler beim Aktualisieren der Favoriten'
+    errorMessage.value = err.message || 'Failed to update favorites'
     errorSnackbar.value = true
   } finally {
     favoriteLoading.value = false
   }
 }
 
-// Add to history
 const addToHistoryClick = async () => {
   if (!product.value) return
 
@@ -432,17 +427,16 @@ const addToHistoryClick = async () => {
 
   try {
     await productsStore.addToHistory(product.value.barcode)
-    successMessage.value = 'Zur Historie hinzugefügt'
+    successMessage.value = 'Added to history'
     successSnackbar.value = true
   } catch (err: any) {
-    errorMessage.value = err.message || 'Fehler beim Hinzufügen zur Historie'
+    errorMessage.value = err.message || 'Failed to add to history'
     errorSnackbar.value = true
   } finally {
     historyLoading.value = false
   }
 }
 
-// Nutri-Score Farbe
 const getNutriscoreColor = (grade: string): string => {
   const colors: Record<string, string> = {
     a: 'success',
@@ -454,28 +448,23 @@ const getNutriscoreColor = (grade: string): string => {
   return colors[grade.toLowerCase()] || 'grey'
 }
 
-// Kategorien als Array
 const getCategoriesArray = (categories: string): string[] => {
   return categories.split(',').map(cat => cat.trim()).filter(Boolean)
 }
 
-// Allergene als Array
 const getAllergensArray = (allergens: string): string[] => {
   return allergens.split(',').map(allergen => allergen.trim()).filter(Boolean)
 }
 
-// Bild Dialog öffnen
 const openImageDialog = (imageUrl: string, title: string) => {
   dialogImageUrl.value = imageUrl
   dialogImageTitle.value = title
   imageDialog.value = true
 }
 
-// Produkt laden wenn nicht im Store
 const loadProduct = async () => {
   const barcode = route.params.barcode as string
 
-  // Prüfen ob Produkt bereits im Store ist
   if (product.value && product.value.barcode === barcode) {
     await checkIfFavorite()
     return
@@ -488,24 +477,23 @@ const loadProduct = async () => {
     const loadedProduct = await productsStore.fetchProductByBarcode(barcode)
 
     if (!loadedProduct) {
-      error.value = productsStore.error || 'Produkt konnte nicht geladen werden'
+      error.value = productsStore.error || 'Failed to load product'
     } else {
       await checkIfFavorite()
     }
   } catch (err: any) {
-    error.value = 'Fehler beim Laden des Produkts'
+    error.value = 'Error loading product'
     console.error('Product load error:', err)
   } finally {
     isLoading.value = false
   }
 }
 
-// Watch route parameter changes
 watch(
     () => route.params.barcode,
     () => {
       loadProduct()
-      ingredientsExpanded.value = false // Reset beim Produktwechsel
+      ingredientsExpanded.value = false
     }
 )
 

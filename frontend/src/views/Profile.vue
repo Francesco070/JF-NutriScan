@@ -11,7 +11,7 @@
       <!-- Loading State -->
       <div v-if="isLoading" class="text-center py-8">
         <v-progress-circular indeterminate color="primary" size="48" />
-        <p class="text-body-2 text-medium-emphasis mt-4">Lade Profil...</p>
+        <p class="text-body-2 text-medium-emphasis mt-4">Loading profile...</p>
       </div>
 
       <template v-else>
@@ -122,13 +122,13 @@
     <!-- Edit Profile Dialog -->
     <v-dialog v-model="editDialog" max-width="500px">
       <v-card rounded="xl">
-        <v-card-title class="text-h5 font-weight-bold pa-6 pb-2">Profil bearbeiten</v-card-title>
+        <v-card-title class="text-h5 font-weight-bold pa-6 pb-2">Edit Profile</v-card-title>
         <v-card-text class="pa-6">
           <v-form ref="editForm" validate-on="submit">
 
             <v-text-field
                 v-model="editData.firstname"
-                label="Vorname"
+                label="First Name"
                 variant="outlined"
                 prepend-inner-icon="mdi-account"
                 :rules="firstNameRules"
@@ -139,7 +139,7 @@
 
             <v-text-field
                 v-model="editData.lastname"
-                label="Nachname"
+                label="Last Name"
                 variant="outlined"
                 prepend-inner-icon="mdi-account"
                 :rules="lastNameRules"
@@ -162,7 +162,7 @@
 
             <v-text-field
                 v-model="editData.password"
-                label="Neues Passwort (optional)"
+                label="New Password (optional)"
                 :type="showPassword ? 'text' : 'password'"
                 variant="outlined"
                 prepend-inner-icon="mdi-lock"
@@ -171,7 +171,7 @@
                 :rules="passwordRules"
                 :error-messages="fieldErrors.password"
                 @input="fieldErrors.password = ''"
-                hint="Leer lassen um aktuelles Passwort zu behalten"
+                hint="Leave blank to keep your current password"
                 persistent-hint
             />
 
@@ -179,14 +179,14 @@
         </v-card-text>
         <v-card-actions class="pa-6 pt-0">
           <v-spacer />
-          <v-btn variant="text" @click="closeDialog">Abbrechen</v-btn>
-          <v-btn color="primary" variant="flat" :loading="saving" @click="saveProfile">Speichern</v-btn>
+          <v-btn variant="text" @click="closeDialog">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" :loading="saving" @click="saveProfile">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <v-snackbar v-model="successSnackbar" :timeout="3000" color="success" location="top">
-      Profil erfolgreich aktualisiert!
+      Profile updated successfully!
     </v-snackbar>
     <v-snackbar v-model="errorSnackbar" :timeout="3000" color="error" location="top">
       {{ errorMessage }}
@@ -239,25 +239,24 @@ const stats = ref({
 })
 
 const firstNameRules = [
-  (v: string) => !!v || 'Vorname ist erforderlich',
-  (v: string) => v.length >= 2 || 'Vorname muss mindestens 2 Zeichen lang sein',
-  (v: string) => /^[a-zA-ZäöüÄÖÜß\s-]+$/.test(v) || 'Vorname darf nur Buchstaben enthalten',
+  (v: string) => !!v || 'First name is required',
+  (v: string) => v.length >= 2 || 'First name must be at least 2 characters',
+  (v: string) => /^[a-zA-ZäöüÄÖÜß\s-]+$/.test(v) || 'First name may only contain letters',
 ]
 
 const lastNameRules = [
-  (v: string) => !!v || 'Nachname ist erforderlich',
-  (v: string) => v.length >= 2 || 'Nachname muss mindestens 2 Zeichen lang sein',
-  (v: string) => /^[a-zA-ZäöüÄÖÜß\s-]+$/.test(v) || 'Nachname darf nur Buchstaben enthalten',
+  (v: string) => !!v || 'Last name is required',
+  (v: string) => v.length >= 2 || 'Last name must be at least 2 characters',
+  (v: string) => /^[a-zA-ZäöüÄÖÜß\s-]+$/.test(v) || 'Last name may only contain letters',
 ]
 
 const emailRules = [
-  (v: string) => !!v || 'Email ist erforderlich',
-  (v: string) => /.+@.+\..+/.test(v) || 'Email muss gültig sein',
+  (v: string) => !!v || 'Email is required',
+  (v: string) => /.+@.+\..+/.test(v) || 'Email must be valid',
 ]
 
-// Password is optional in edit — only validate if something was entered
 const passwordRules = [
-  (v: string) => !v || v.length >= 6 || 'Passwort muss mindestens 6 Zeichen lang sein',
+  (v: string) => !v || v.length >= 6 || 'Password must be at least 6 characters',
 ]
 
 // ── Computed ──────────────────────────────────────────────────────────────────
@@ -322,11 +321,11 @@ async function saveProfile() {
       editDialog.value      = false
       successSnackbar.value = true
     } else {
-      errorMessage.value  = authStore.error || 'Update fehlgeschlagen'
+      errorMessage.value  = authStore.error || 'Update failed'
       errorSnackbar.value = true
     }
   } catch (err: any) {
-    errorMessage.value  = err.message || 'Update fehlgeschlagen'
+    errorMessage.value  = err.message || 'Update failed'
     errorSnackbar.value = true
   } finally {
     saving.value = false
@@ -338,7 +337,7 @@ onMounted(async () => {
     const data = await authAPI.getStats()
     if (data) stats.value = data
   } catch (e) {
-    console.error('Fehler beim Laden der Stats:', e)
+    console.error('Failed to load stats:', e)
   } finally {
     isLoading.value = false
   }

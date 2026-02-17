@@ -13,7 +13,7 @@
       <!-- Loading State -->
       <div v-if="isLoading" class="text-center py-8">
         <v-progress-circular indeterminate color="primary" size="48" />
-        <p class="text-body-2 text-medium-emphasis mt-4">Lade Statistiken...</p>
+        <p class="text-body-2 text-medium-emphasis mt-4">Loading statistics...</p>
       </div>
 
       <template v-else>
@@ -48,7 +48,7 @@
             <div v-if="stats.healthScoreTrend.length === 0" class="text-center py-4">
               <v-icon size="64" color="grey">mdi-chart-line</v-icon>
               <p class="text-body-2 text-medium-emphasis mt-2">
-                Noch keine Daten verfügbar. Scanne Produkte um deinen Trend zu sehen!
+                No data available yet. Scan products to see your trend!
               </p>
             </div>
 
@@ -109,8 +109,8 @@
               <template v-slot:prepend>
                 <v-icon size="large">mdi-chart-donut</v-icon>
               </template>
-              <div class="text-subtitle-1">Noch keine Bewertungen</div>
-              <div class="text-caption">Scanne Produkte mit Nutri-Score!</div>
+              <div class="text-subtitle-1">No ratings yet</div>
+              <div class="text-caption">Scan products with a Nutri-Score to get started!</div>
             </v-alert>
 
             <!-- Pie Chart -->
@@ -159,12 +159,12 @@
         <!-- Summary Card -->
         <v-card class="mb-20" color="surface" rounded="lg">
           <v-card-text>
-            <h3 class="text-h6 font-weight-bold mb-4">Zusammenfassung</h3>
+            <h3 class="text-h6 font-weight-bold mb-4">Summary</h3>
 
             <div class="summary-item">
               <v-icon color="success" class="mr-3">mdi-trophy</v-icon>
               <div>
-                <h4 class="text-subtitle-2 font-weight-bold">Beste Woche</h4>
+                <h4 class="text-subtitle-2 font-weight-bold">Best Week</h4>
                 <p class="text-caption text-medium-emphasis">
                   {{ bestWeekMessage }}
                 </p>
@@ -176,7 +176,7 @@
             <div class="summary-item">
               <v-icon color="primary" class="mr-3">mdi-target</v-icon>
               <div>
-                <h4 class="text-subtitle-2 font-weight-bold">Ziel</h4>
+                <h4 class="text-subtitle-2 font-weight-bold">Goal</h4>
                 <p class="text-caption text-medium-emphasis">
                   {{ goalMessage }}
                 </p>
@@ -188,7 +188,7 @@
             <div class="summary-item">
               <v-icon color="warning" class="mr-3">mdi-lightbulb-outline</v-icon>
               <div>
-                <h4 class="text-subtitle-2 font-weight-bold">Tipp</h4>
+                <h4 class="text-subtitle-2 font-weight-bold">Tip</h4>
                 <p class="text-caption text-medium-emphasis">
                   {{ tipMessage }}
                 </p>
@@ -262,11 +262,11 @@ const pieSlices = computed(() => {
 
     // Create donut slice path
     const path = [
-      `M ${x1} ${y1}`, // Move to start of outer arc
-      `A ${pieRadius} ${pieRadius} 0 ${largeArc} 1 ${x2} ${y2}`, // Outer arc
-      `L ${x3} ${y3}`, // Line to inner arc
-      `A ${pieInnerRadius} ${pieInnerRadius} 0 ${largeArc} 0 ${x4} ${y4}`, // Inner arc
-      'Z' // Close path
+      `M ${x1} ${y1}`,
+      `A ${pieRadius} ${pieRadius} 0 ${largeArc} 1 ${x2} ${y2}`,
+      `L ${x3} ${y3}`,
+      `A ${pieInnerRadius} ${pieInnerRadius} 0 ${largeArc} 0 ${x4} ${y4}`,
+      'Z'
     ].join(' ')
 
     currentAngle = endAngle
@@ -304,7 +304,6 @@ const parsedTrendData = computed(() => {
 
   return validData.map((d, i) => {
     const x = padding + i * xStep
-    // Higher score = worse, so invert Y axis
     const y = d.value !== null
         ? chartHeight - padding - ((d.value - minScore) / range) * (chartHeight - 2 * padding)
         : null
@@ -327,21 +326,9 @@ const dayLabels = computed(() => {
 
   return trend.map(d => {
     const date = new Date(d.date)
-    return date.toLocaleDateString('de-DE', { weekday: 'short' })
+    return date.toLocaleDateString('en-US', { weekday: 'short' })
   })
 })
-
-// Score helpers
-const getScoreColor = (grade: string): string => {
-  const colors: Record<string, string> = {
-    A: 'success',
-    B: 'light-green',
-    C: 'warning',
-    D: 'orange',
-    E: 'error',
-  }
-  return colors[grade.toUpperCase()] || 'grey'
-}
 
 const getScoreLabel = (grade: string): string => {
   const labels: Record<string, string> = {
@@ -357,31 +344,31 @@ const getScoreLabel = (grade: string): string => {
 // Summary messages
 const bestWeekMessage = computed(() => {
   const trend = stats.value.healthScoreTrend
-  if (trend.length === 0) return 'Noch keine Daten verfügbar'
+  if (trend.length === 0) return 'No data available yet'
 
   const validScores = trend.filter(d => d.score !== null)
-  if (validScores.length === 0) return 'Noch keine Scans diese Woche'
+  if (validScores.length === 0) return 'No scans this week yet'
 
   const avgScore = validScores.reduce((sum, d) => sum + d.score!, 0) / validScores.length
 
-  if (avgScore < 0) return 'Diese Woche war ausgezeichnet! 🎉'
-  if (avgScore < 10) return 'Sehr gute Woche! Weiter so!'
-  if (avgScore < 20) return 'Gute Woche mit Verbesserungspotential'
-  return 'Es gibt Raum für Verbesserungen'
+  if (avgScore < 0) return 'This week was excellent! 🎉'
+  if (avgScore < 10) return 'Great week! Keep it up!'
+  if (avgScore < 20) return 'Good week with room to improve'
+  return 'There is room for improvement'
 })
 
 const goalMessage = computed(() => {
   const aCount = stats.value.nutriScoreDistribution.find(d => d.grade === 'A')?.count || 0
   const totalScans = stats.value.totalScans
 
-  if (totalScans === 0) return 'Scanne 10 Produkte um dein erstes Ziel zu erreichen!'
+  if (totalScans === 0) return 'Scan 10 products to reach your first goal!'
 
   const aPercent = (aCount / totalScans) * 100
 
-  if (aPercent >= 50) return 'Ziel erreicht! 50%+ Produkte mit A-Rating! 🎯'
+  if (aPercent >= 50) return 'Goal reached! 50%+ products with an A rating! 🎯'
 
   const remaining = Math.ceil((totalScans * 0.5) - aCount)
-  return `Noch ${remaining} A-Produkte bis zum 50% Ziel`
+  return `${remaining} more A-rated products to reach the 50% goal`
 })
 
 const tipMessage = computed(() => {
@@ -390,17 +377,17 @@ const tipMessage = computed(() => {
   const eCount = dist.find(d => d.grade === 'E')?.count || 0
 
   if (dCount + eCount > stats.value.totalScans * 0.3) {
-    return 'Versuche, Produkte mit D oder E Rating zu vermeiden und nach Alternativen zu suchen.'
+    return 'Try to avoid products with a D or E rating and look for healthier alternatives.'
   }
 
   const aCount = dist.find(d => d.grade === 'A')?.count || 0
   const bCount = dist.find(d => d.grade === 'B')?.count || 0
 
   if (aCount + bCount > stats.value.totalScans * 0.7) {
-    return 'Großartig! Du wählst überwiegend gesunde Produkte. Weiter so!'
+    return 'Great job! You are mostly choosing healthy products. Keep it up!'
   }
 
-  return 'Achte beim nächsten Einkauf bewusst auf den Nutri-Score der Produkte.'
+  return 'Next time you shop, pay attention to the Nutri-Score on products.'
 })
 
 // Load stats from API
@@ -411,7 +398,7 @@ onMounted(async () => {
       stats.value = data
     }
   } catch (error) {
-    console.error('Fehler beim Laden der Statistiken:', error)
+    console.error('Failed to load statistics:', error)
   } finally {
     isLoading.value = false
   }
@@ -426,7 +413,6 @@ onMounted(async () => {
 .pie-center-text-small { font-size: 14px; }
 .legend-item { transition: all 0.2s; cursor: pointer; }
 .legend-item:hover { background-color: rgba(var(--v-theme-surface-variant), 0.3) !important; }
-/* Wrapper with proper height and scrolling */
 .stats-wrapper {
   height: 100vh;
   overflow-y: auto;
