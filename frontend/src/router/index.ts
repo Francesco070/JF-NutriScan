@@ -59,6 +59,20 @@ const routes = [
         component: () => import('../views/Register.vue'),
         meta: { requiresGuest: true }
     },
+    // ── Offline page ─────────────────────────────────────────────────────────
+    {
+        path: '/offline',
+        name: 'Offline',
+        component: () => import('../views/OfflinePage.vue'),
+        meta: { skipOnlineCheck: true, skipAuth: true }
+    },
+    // ── 404 catch-all ────────────────────────────────────────────────────────
+    {
+        path: '/:pathMatch(.*)*',
+        name: 'NotFound',
+        component: () => import('../views/NotFound.vue'),
+        meta: { skipAuth: true }
+    },
 ]
 
 const router = createRouter({
@@ -66,26 +80,50 @@ const router = createRouter({
     routes,
 })
 
-// Navigation Guards
+async function isOnline(): Promise<boolean> {
+    if (!navigator.onLine) return false
+    try {
+        const res = await fetch(import.meta.env.VITE_API_BASE_URL + "/products/40144467", {
+            method: 'HEAD',
+            cache: 'no-store',
+            signal: AbortSignal.timeout(3000),
+        })
+
+        return res.ok
+    } catch {
+        return false
+    }
+}
+
 router.beforeEach(async (to, _from, next) => {
-    const authStore = useAuthStore()
-
-    if (!authStore.isInitialized) {
-        await authStore.initAuth()
+    if (!to.meta.skipOnlineCheck) {
+        const online = await isOnline()
+        if (!online) {
+            // Pass the intended destination so OfflinePage can redirect back
+            return next({ path: '/offline', query: { redirect: to.fullPath } })
+        }
     }
 
-    const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-    const requiresGuest = to.matched.some(record => record.meta.requiresGuest)
+    // 2. Auth check
+    if (!to.meta.skipAuth) {
+        const authStore = useAuthStore()
 
-    if (requiresAuth && !authStore.isAuthenticated) {
-        // Benutzer muss eingeloggt sein, ist aber nicht eingeloggt
-        next('/login')
-    } else if (requiresGuest && authStore.isAuthenticated) {
-        // Benutzer ist bereits eingeloggt und versucht Login/Register zu öffnen
-        next('/')
-    } else {
-        next()
+        if (!authStore.isInitialized) {
+            await authStore.initAuth()
+        }
+
+        const requiresAuth  = to.matched.some(record => record.meta.requiresAuth)
+        const requiresGuest = to.matched.some(record => record.meta.requiresGuest)
+
+        if (requiresAuth && !authStore.isAuthenticated) {
+            return next('/login')
+        }
+        if (requiresGuest && authStore.isAuthenticated) {
+            return next('/')
+        }
     }
+
+    next()
 })
 
 export default router
