@@ -122,18 +122,64 @@
     <!-- Edit Profile Dialog -->
     <v-dialog v-model="editDialog" max-width="500px">
       <v-card rounded="xl">
-        <v-card-title class="text-h5 font-weight-bold">Profil bearbeiten</v-card-title>
-        <v-card-text>
-          <v-form ref="editForm">
-            <v-text-field v-model="editData.firstname" label="Vorname" variant="outlined" prepend-inner-icon="mdi-account" class="mb-3" />
-            <v-text-field v-model="editData.lastname"  label="Nachname" variant="outlined" prepend-inner-icon="mdi-account" class="mb-3" />
-            <v-text-field v-model="editData.email"     label="Email" type="email" variant="outlined" prepend-inner-icon="mdi-email" class="mb-3" />
-            <v-text-field v-model="editData.password"  label="Neues Passwort (optional)" type="password" variant="outlined" prepend-inner-icon="mdi-lock" hint="Leer lassen um aktuelles Passwort zu behalten" persistent-hint />
+        <v-card-title class="text-h5 font-weight-bold pa-6 pb-2">Profil bearbeiten</v-card-title>
+        <v-card-text class="pa-6">
+          <v-form ref="editForm" validate-on="submit">
+
+            <v-text-field
+                v-model="editData.firstname"
+                label="Vorname"
+                variant="outlined"
+                prepend-inner-icon="mdi-account"
+                :rules="firstNameRules"
+                :error-messages="fieldErrors.firstname"
+                @input="fieldErrors.firstname = ''"
+                class="mb-3"
+            />
+
+            <v-text-field
+                v-model="editData.lastname"
+                label="Nachname"
+                variant="outlined"
+                prepend-inner-icon="mdi-account"
+                :rules="lastNameRules"
+                :error-messages="fieldErrors.lastname"
+                @input="fieldErrors.lastname = ''"
+                class="mb-3"
+            />
+
+            <v-text-field
+                v-model="editData.email"
+                label="Email"
+                type="email"
+                variant="outlined"
+                prepend-inner-icon="mdi-email"
+                :rules="emailRules"
+                :error-messages="fieldErrors.email"
+                @input="fieldErrors.email = ''"
+                class="mb-3"
+            />
+
+            <v-text-field
+                v-model="editData.password"
+                label="Neues Passwort (optional)"
+                :type="showPassword ? 'text' : 'password'"
+                variant="outlined"
+                prepend-inner-icon="mdi-lock"
+                :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                @click:append-inner="showPassword = !showPassword"
+                :rules="passwordRules"
+                :error-messages="fieldErrors.password"
+                @input="fieldErrors.password = ''"
+                hint="Leer lassen um aktuelles Passwort zu behalten"
+                persistent-hint
+            />
+
           </v-form>
         </v-card-text>
-        <v-card-actions>
+        <v-card-actions class="pa-6 pt-0">
           <v-spacer />
-          <v-btn variant="text" @click="editDialog = false">Abbrechen</v-btn>
+          <v-btn variant="text" @click="closeDialog">Abbrechen</v-btn>
           <v-btn color="primary" variant="flat" :loading="saving" @click="saveProfile">Speichern</v-btn>
         </v-card-actions>
       </v-card>
@@ -161,25 +207,29 @@ const router    = useRouter()
 const theme     = useTheme()
 const authStore = useAuthStore()
 
-const savedTheme = localStorage.getItem(THEME_KEY) ?? 'light'
-theme.change(savedTheme)                          // ← correct Vuetify 3 API
+const savedTheme = localStorage.getItem(THEME_KEY) ?? 'dark'
+theme.change(savedTheme)
 const isDark = ref(savedTheme === 'dark')
 
 function toggleTheme() {
   const next = isDark.value ? 'light' : 'dark'
-  theme.change(next)                              // ← correct Vuetify 3 API
+  theme.change(next)
   isDark.value = !isDark.value
-  localStorage.setItem(THEME_KEY, next)           // ← persist
+  localStorage.setItem(THEME_KEY, next)
 }
 
 const isLoading       = ref(true)
 const editDialog      = ref(false)
 const saving          = ref(false)
+const showPassword    = ref(false)
 const successSnackbar = ref(false)
 const errorSnackbar   = ref(false)
 const errorMessage    = ref('')
+const editForm        = ref()
 
 const editData = ref({ firstname: '', lastname: '', email: '', password: '' })
+
+const fieldErrors = ref({ firstname: '', lastname: '', email: '', password: '' })
 
 const stats = ref({
   totalScans: 0,
@@ -188,6 +238,29 @@ const stats = ref({
   nutriScoreDistribution: [] as Array<{ grade: string; count: number; percent: number }>,
 })
 
+const firstNameRules = [
+  (v: string) => !!v || 'Vorname ist erforderlich',
+  (v: string) => v.length >= 2 || 'Vorname muss mindestens 2 Zeichen lang sein',
+  (v: string) => /^[a-zA-ZäöüÄÖÜß\s-]+$/.test(v) || 'Vorname darf nur Buchstaben enthalten',
+]
+
+const lastNameRules = [
+  (v: string) => !!v || 'Nachname ist erforderlich',
+  (v: string) => v.length >= 2 || 'Nachname muss mindestens 2 Zeichen lang sein',
+  (v: string) => /^[a-zA-ZäöüÄÖÜß\s-]+$/.test(v) || 'Nachname darf nur Buchstaben enthalten',
+]
+
+const emailRules = [
+  (v: string) => !!v || 'Email ist erforderlich',
+  (v: string) => /.+@.+\..+/.test(v) || 'Email muss gültig sein',
+]
+
+// Password is optional in edit — only validate if something was entered
+const passwordRules = [
+  (v: string) => !v || v.length >= 6 || 'Passwort muss mindestens 6 Zeichen lang sein',
+]
+
+// ── Computed ──────────────────────────────────────────────────────────────────
 const userInitials = computed(() => {
   if (!authStore.user) return '?'
   const first = authStore.user.firstname?.[0] || ''
@@ -216,8 +289,15 @@ watch(editDialog, (open) => {
       email:     authStore.user.email,
       password:  '',
     }
+    fieldErrors.value = { firstname: '', lastname: '', email: '', password: '' }
+    showPassword.value = false
   }
 })
+
+function closeDialog() {
+  editDialog.value = false
+  editForm.value?.reset()
+}
 
 function handleLogout() {
   authStore.logout()
@@ -225,6 +305,9 @@ function handleLogout() {
 }
 
 async function saveProfile() {
+  const { valid } = await editForm.value.validate()
+  if (!valid) return
+
   saving.value = true
   try {
     const payload: any = {
