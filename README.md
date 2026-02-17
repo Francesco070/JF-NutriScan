@@ -1,5 +1,5 @@
 # JF-NutriScan
-Justin &amp; Francesco NutriScan App
+Justin & Francesco NutriScan App
 
 NutriScan is a food product scanning application that allows users to scan barcodes and retrieve detailed nutritional information. The application consists of a Vue 3 frontend (packaged as a native Android APK via Capacitor) and a Node.js/Hono backend with a PostgreSQL database.
 
@@ -9,13 +9,19 @@ NutriScan is a food product scanning application that allows users to scan barco
 
 - [Requirements](#requirements)
 - [Local Development Setup](#local-development-setup)
-    - [Frontend](#frontend)
-    - [Backend with Docker](#backend-with-docker)
+  - [Frontend](#frontend)
+  - [Capacitor (Android)](#capacitor-android)
+  - [Backend with Docker](#backend-with-docker)
 - [Environment Variables](#environment-variables)
+  - [Frontend](#frontend-env)
+  - [Backend](#backend-env)
+  - [GitHub Actions Secrets](#github-actions-secrets)
 - [API Endpoints](#api-endpoints)
+  - [Public Endpoints](#public-endpoints-no-authentication-required)
+  - [Protected Endpoints](#protected-endpoints-bearer-token-required)
 - [CI/CD Pipelines](#cicd-pipelines)
-    - [Android APK Build](#android-apk-build)
-    - [Docker Backend Build](#docker-backend-build)
+  - [Android APK Build](#android-apk-build)
+  - [Docker Backend Build](#docker-backend-build)
 - [Database](#database)
 - [Architecture Overview](#architecture-overview)
 
@@ -29,18 +35,18 @@ NutriScan is a food product scanning application that allows users to scan barco
 - Node.js >= 20
 - npm >= 10
 
-### Frontend
+### Frontend Requirements
 
 - Node.js 20
 - A modern browser with camera access (for scanning)
 - Android Studio (optional, for native Android development)
 
-### Backend
+### Backend Requirements
 
 - Docker >= 24
 - Docker Compose >= 2.20
 
-### Android APK Build (CI/CD only)
+### Android APK Build Requirements
 
 - Java 17 (Temurin distribution)
 - Android SDK with Build Tools 34.0.0 and platform android-34
@@ -92,7 +98,7 @@ To preview the production build locally.
 npm run preview
 ```
 
-#### Capacitor (Android)
+### Capacitor (Android)
 
 The frontend is configured to run as a native Android application via Capacitor. The app ID is `com.jf.nutriscan`.
 
@@ -167,7 +173,9 @@ docker compose down -v
 
 ## Environment Variables
 
-### Frontend (`frontend/.env`)
+### Frontend env
+
+**File:** `frontend/.env`
 
 | Variable | Description | Default |
 |---|---|---|
@@ -177,7 +185,9 @@ docker compose down -v
 | `VITE_ENABLE_SYNC` | Enable sync features | `true` |
 | `VITE_ENABLE_PWA` | Enable PWA capabilities | `true` |
 
-### Backend (`backend/.env`)
+### Backend env
+
+**File:** `backend/.env`
 
 | Variable | Description | Default (local) |
 |---|---|---|
@@ -189,7 +199,7 @@ docker compose down -v
 | `OPEN_FOOD_FACTS_URL` | Open Food Facts API base URL | `https://world.openfoodfacts.net` |
 | `ALLOWED_ORIGINS` | Comma-separated list of allowed CORS origins | `http://localhost:5173,http://localhost:4173` |
 
-### GitHub Actions Secrets (required for CI/CD)
+### GitHub Actions Secrets
 
 | Secret | Description |
 |---|---|
