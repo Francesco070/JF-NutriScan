@@ -3,11 +3,11 @@
 ## Inhaltsverzeichnis
 
 - [Testprotokoll](#testprotokoll)
-    - [Testfall 1:Lebensmittel per Barcode scannen](#testfall-1lebensmittel-per-barcode-scannen)
+    - [Testfall 1: Produkt per Barcode scannen und zur History hinzufügen](#testfall-1-produkt-per-barcode-scannen-und-zur-history-hinzufugen)
         - [Vorbedingungen](#vorbedingungen)
         - [Vorgehen beim Test](#vorgehen-beim-test)
         - [Erwartetes Resultat](#erwartetes-resultat)
-    - [Testfall 2: Profil und Statistiken anzeigen](#testfall-2-profil-und-statistiken-anzeigen)
+    - [Testfall 2: Benutzer bearbeiten](#testfall-2-benutzer-bearbeiten)
         - [Vorbedingungen](#vorbedingungen-1)
         - [Vorgehen beim Test](#vorgehen-beim-test-1)
         - [Erwartetes Resultat](#erwartetes-resultat-1)
@@ -17,51 +17,74 @@
 - [Vorbereitung zur Veröffentlichung](#vorbereitung-zur-veroffentlichung)
 - [Installationsanleitung](#installationsanleitung)
 
-## Testfall 1:Lebensmittel per Barcode scannen
+## Testfall 1: Produkt per Barcode scannen und zur History hinzufügen
 
 ### Vorbedingungen
 
-- App ist installiert und gestartet
 - Internetverbindung ist aktiv
 - Kamera-Zugriff wurde erlaubt
 
 ### Vorgehen beim Test
 
 1. App starten
-2. Auf den Button "Barcode scannen" tippen
-3. Kamera auf den Barcode eines Lebensmittels richten
-4. Warten, bis der Barcode erkannt wird
-5. Produktdetails anzeigen lassen
-6. Menge in Gramm eingeben
-7. Auf "Hinzufügen" tippen
+2. Einen Benutzer registrieren
+3. Mit dem erstellten Benutzer einloggen
+4. In der Navigation auf den Button "Scan" tippen
+5. Kamera auf den Barcode eines Produkts richten
+6. Warten, bis der Barcode erkannt wird
+7. Produktdetails anzeigen lassen
+8. Auf "ADD TO HISTORY" tippen
 
 ### Erwartetes Resultat
 
 - Das gescannte Produkt wird korrekt erkannt
 - Die Nährwertdaten werden angezeigt
-- Die Kalorien werden entsprechend der eingegebenen Menge berechnet
-- Das Lebensmittel erscheint im Tagesprotokoll
+- Das Produkt wurde zur History hinzugefügt
+- Die Produktdaten erscheinen auf der "Stats"-Seite
 
-## Testfall 2: Profil und Statistiken anzeigen
+### Resultat
+
+#### Tester
+
+Justin Murer
+
+#### Ergebnis
+
+Der Test konnte ohne Probleme durchgeführt werden. Das Produkt wurde zur History hinzugefügt und die Produktdaten werden auf der "Stats"-Seite angezeigt.
+
+## Testfall 2: Benutzer bearbeiten
 
 ### Vorbedingungen
 
-- App ist installiert und gestartet
-- Es sind bereits Kaloriendaten gespeichert
+\-
 
 ### Vorgehen beim Test
 
 1. App starten
-2. In der Navigationsleiste auf den Button "Profil" tippen
-3. Profilansicht wird geöffnet
-4. Statistikbereich in der Profilansicht anzeigen lassen
+2. Einen Benutzer registrieren
+3. Mit dem erstellten Benutzer einloggen
+4. In der Navigation auf den Button "Profile" tippen
+5. Auf den Button "EDIT PROFILE" tippen
+6. E-Mail-Adresse ändern
+7. Auf den Button "SAVE" tippen
+8. Auf den Button "Logout" tippen, um sich auszuloggen
+9. Mit der neuen E-Mail-Adresse und dem gleichen Passwort einloggen
 
 ### Erwartetes Resultat
 
-- Die Profilseite wird korrekt angezeigt
-- Die persönlichen Profildaten sind sichtbar
-- Die Statistiken (z.B. tägliche Kalorienübersicht) werden korrekt dargestellt
-- Die angezeigten Werte entsprechen den gespeicherten Daten
+- Die neue E-Mail-Adresse wird in der Datenbank gespeichert
+- Man kann sich mit der neuen E-Mail-Adresse und dem gleichen Passwort einloggen
+- Alle Benutzerdaten sind gleich geblieben (Favorites, History)
+
+### Resultat
+
+#### Tester
+
+Justin Murer
+
+#### Ergebnis
+
+Der Test konnte ohne Probleme durchgeführt werden. Die neue E-Mail-Adresse des Benutzers wurde in der Datenbank gespeichert. Nach dem Ausloggen konnte man sich mit der neuen E-Mail-Adresse und dem gleichen Passwort einloggen, und die Benutzerdaten wie Favorites und History sind gleich geblieben.
 
 # Reflexion
 
@@ -97,6 +120,19 @@ Die App richtet sich an Personen, die ihre Ernährungsqualität bewusster einsch
 - Menschen, die sich gesünder ernähren möchten und eine einfache Orientierung beim Einkaufen brauchen
 - Personen, die schnell erkennen möchten, wie ausgewogen ihre täglichen Lebensmittel sind
 - Sportlich aktive Nutzer, die auf eine hochwertige und ausgewogene Ernährung achten möchten
+
+### Was könnte nächstes Mal anders vorgehen/verbessern
+
+Beim Projekt wurde das Hosting des Backends zu spät geplant. Ursprünglich wollten wir den Server auf einem eigenen VPS betreiben. Für die Einrichtung haben wir fast einen ganzen Tag aufgewendet, aber wichtige Punkte wie stabile Erreichbarkeit und HTTPS konnten nicht zuverlässig funktionieren. Am Ende mussten wir das Backend kurzfristig auf den Kubernetes-Cluster der Firma von Francesco verschieben, wo es sofort stabil lief.
+
+Rückblickend hätten wir die Infrastruktur früher festlegen und testen sollen. Da das Hosting erst gegen Ende eingerichtet wurde, entstand Zeitdruck und wir verloren viel Zeit mit Fehlersuche.
+
+- Verbesserungen für zukünftige Projekte:
+- Hostinglösung bereits am Anfang des Projekts festlegen
+- Frühes Testdeployment durchführen
+- Risiken eines eigenen VPS vorher prüfen
+- Eine Backup-Lösung einplanen
+- Mit besserer Planung zu Beginn hätte sich der Zeitverlust vermeiden lassen.
 
 # Vorbereitung zur Veröffentlichung
 
