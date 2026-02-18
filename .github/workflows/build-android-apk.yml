@@ -4,11 +4,15 @@ on:
   push:
     branches:
       - main
-      - develop
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/build-android-apk.yml'
   pull_request:
     branches:
       - main
-      - develop
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/build-android-apk.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -79,8 +83,6 @@ jobs:
             BUILD_ENV="${{ github.event.inputs.environment }}"
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             BUILD_ENV="production"
-          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
-            BUILD_ENV="staging"
           else
             BUILD_ENV="development"
           fi
@@ -379,12 +381,12 @@ jobs:
           rm -f key.properties
           rm -f app/build.gradle.backup
 
-  # AUTOMATISCHES RELEASE - BEI JEDEM PUSH AUF MAIN/DEVELOP
+  # AUTOMATISCHES RELEASE - BEI JEDEM PUSH AUF MAIN
   create-release:
     name: Create GitHub Release
     needs: build-apk
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main')
 
     permissions:
       contents: write
@@ -407,15 +409,9 @@ jobs:
           ENV="${{ needs.build-apk.outputs.environment }}"
           
           # Release Tag: v1.0.0-build123 oder v1.0.0-staging-build123
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            RELEASE_TAG="v${VERSION}-build${BUILD}"
-            RELEASE_NAME="NutriScan v${VERSION} (Build ${BUILD})"
-            IS_PRERELEASE="false"
-          else
-            RELEASE_TAG="v${VERSION}-${ENV}-build${BUILD}"
-            RELEASE_NAME="NutriScan v${VERSION} ${ENV^} (Build ${BUILD})"
-            IS_PRERELEASE="true"
-          fi
+          RELEASE_TAG="v${VERSION}-build${BUILD}"
+          RELEASE_NAME="NutriScan v${VERSION} (Build ${BUILD})"
+          IS_PRERELEASE="false"
           
           echo "release-tag=${RELEASE_TAG}" >> $GITHUB_OUTPUT
           echo "release-name=${RELEASE_NAME}" >> $GITHUB_OUTPUT
@@ -620,7 +616,7 @@ jobs:
             echo "✅ GitHub Release: CREATED"
             echo "   🔗 https://github.com/${{ github.repository }}/releases"
           elif [[ "${{ needs.create-release.result }}" == "skipped" ]]; then
-            echo "⏭️  GitHub Release: SKIPPED (not main/develop push)"
+            echo "⏭️  GitHub Release: SKIPPED (not main push)"
           else
             echo "❌ GitHub Release: FAILED"
           fi
