@@ -1,5 +1,5 @@
 # JF-NutriScan
-Justin & Francesco NutriScan App
+[Justin-Murer](https://github.com/Justin-Murer) & [Francesco070](https://github.com/Francesco070) NutriScan App
 
 NutriScan is a food product scanning application that allows users to scan barcodes and retrieve detailed nutritional information. The application consists of a Vue 3 frontend (packaged as a native Android APK via Capacitor) and a Node.js/Hono backend with a PostgreSQL database.
 
