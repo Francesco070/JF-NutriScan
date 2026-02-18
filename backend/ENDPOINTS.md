@@ -53,5 +53,31 @@ Dummy data:
 }
 ```
 
-- DELETE /api/products/"barcode"
-    - Delete a product by barcode.
+---
+### Public Endpoints (no authentication required)
+
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/api/auth/register` | Register a new account |
+| `POST` | `/api/auth/login` | Authenticate and receive a JWT |
+| `GET` | `/api/products/:barcode` | Fetch product details from Open Food Facts by barcode (8-14 digits) |
+| `GET` | `/health` | Server health check |
+
+### Protected Endpoints (Bearer token required)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/auth/me` | Get the current user's profile |
+| `GET` | `/api/auth/stats` | Get scan and favorite statistics |
+| `PUT` | `/api/auth/update` | Update profile information |
+| `POST` | `/api/products` | Create a product record in the database |
+| `DELETE` | `/api/products/:barcode` | Delete a product by barcode |
+| `GET` | `/api/products/favorites` | List all favorited products |
+| `POST` | `/api/products/favorites/:barcode` | Add a product to favorites |
+| `DELETE` | `/api/products/favorites/:barcode` | Remove a product from favorites |
+| `GET` | `/api/products/favorites/:barcode/check` | Check if a product is favorited |
+| `GET` | `/api/products/history` | List scan history (last 50, deduplicated) |
+| `POST` | `/api/products/history/:barcode` | Add a scan to history |
+
+Authentication uses JWT Bearer tokens. Include the token in the `Authorization` header: `Authorization: Bearer <token>`.
+
