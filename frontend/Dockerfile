@@ -46,9 +46,11 @@ COPY nginx.conf /etc/nginx/conf.d/app.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Directories nginx needs to write to as non-root
-RUN mkdir -p /var/cache/nginx /var/log/nginx /var/run && \
-    chown -R nginx:nginx /var/cache/nginx /var/log/nginx /var/run /usr/share/nginx/html && \
-    chmod -R 755 /var/cache/nginx /var/log/nginx
+RUN mkdir -p /var/cache/nginx /var/log/nginx /tmp/nginx && \
+    chown -R nginx:nginx /var/cache/nginx /var/log/nginx /tmp/nginx /usr/share/nginx/html && \
+    chmod -R 755 /var/cache/nginx /var/log/nginx && \
+    # Point nginx pid file to a writable location
+    sed -i 's|pid\s*/run/nginx.pid;|pid /tmp/nginx/nginx.pid;|' /etc/nginx/nginx.conf
 
 USER nginx
 
