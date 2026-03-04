@@ -16,8 +16,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Vite bakes these values into the JS bundle at build time.
-# The production API URL is the default — override via --build-arg if needed.
 ARG VITE_API_BASE_URL=https://nutriscan.viel-erfolg.ch/api
 ARG VITE_OPEN_FOOD_FACTS_URL=https://world.openfoodfacts.org
 ARG VITE_ENABLE_AUTH=true
@@ -35,21 +33,24 @@ RUN npm run build
 # ─── Stage 3: Production (nginx) ──────────────────────────────────────────────
 FROM nginx:1.27-alpine AS production
 
+# Remove default config
 RUN rm /etc/nginx/conf.d/default.conf
 
+# Remove the "user" directive from the global nginx.conf so it works as non-root
+RUN sed -i '/^user /d' /etc/nginx/nginx.conf
+
+# Copy our SPA config
 COPY nginx.conf /etc/nginx/conf.d/app.conf
 
+# Copy built app
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -S appuser -u 1001 -G appgroup && \
-    chown -R appuser:appgroup /usr/share/nginx/html && \
-    chown -R appuser:appgroup /var/cache/nginx && \
-    chown -R appuser:appgroup /var/log/nginx && \
-    touch /var/run/nginx.pid && \
-    chown appuser:appgroup /var/run/nginx.pid
+# Directories nginx needs to write to as non-root
+RUN mkdir -p /var/cache/nginx /var/log/nginx /var/run && \
+    chown -R nginx:nginx /var/cache/nginx /var/log/nginx /var/run /usr/share/nginx/html && \
+    chmod -R 755 /var/cache/nginx /var/log/nginx
 
-USER appuser
+USER nginx
 
 EXPOSE 80
 
