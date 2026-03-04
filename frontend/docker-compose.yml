@@ -1,0 +1,18 @@
+services:
+  frontend:
+    build:
+      context: .
+      target: deps
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      # Points to the live production API — no local backend needed
+      - VITE_API_BASE_URL=https://nutriscan.viel-erfolg.ch/api
+      - VITE_OPEN_FOOD_FACTS_URL=https://world.openfoodfacts.org
+      - VITE_ENABLE_AUTH=true
+      - VITE_ENABLE_SYNC=true
+      - VITE_ENABLE_PWA=true
+    command: npm run dev -- --host 0.0.0.0

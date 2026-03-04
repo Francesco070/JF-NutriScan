@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+android
+.env.local
+.env.*.local
+.vscode
+.idea
+.DS_Store
+*.log
+.git
+.gitignore
+README.md
+*.md
