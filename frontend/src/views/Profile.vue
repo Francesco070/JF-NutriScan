@@ -105,7 +105,7 @@
               </template>
               <v-list-item-title>About</v-list-item-title>
               <template v-slot:append>
-                <span class="text-caption text-medium-emphasis">v1.0.0</span>
+                <span class="text-caption text-medium-emphasis">v2.0.0</span>
               </template>
             </v-list-item>
             <v-list-item @click="handleLogout" class="text-error">
