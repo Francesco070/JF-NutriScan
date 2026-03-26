@@ -176,7 +176,7 @@ Rückblickend hätten wir die Infrastruktur früher festlegen und testen sollen.
     - Weiterleitung aller Anfragen an den internen Service-Port (3000)
 
     Beispielablauf:
-    1. Nutzer ruft https://nutriscan.viel-erfolg.ch auf
+    1. Nutzer ruft https://nutriscan-api.frnc.dev auf
     2. Anfrage erreicht den Ingress Controller
     3. TLS wird dort entschlüsselt
     4. Anfrage wird an den Kubernetes Service weitergeleitet

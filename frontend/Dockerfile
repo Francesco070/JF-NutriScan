@@ -16,7 +16,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ARG VITE_API_BASE_URL=https://nutriscan.viel-erfolg.ch/api
+ARG VITE_API_BASE_URL=https://nutriscan-api.frnc.dev/api
 ARG VITE_OPEN_FOOD_FACTS_URL=https://world.openfoodfacts.org
 ARG VITE_ENABLE_AUTH=true
 ARG VITE_ENABLE_SYNC=true

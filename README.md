@@ -179,7 +179,7 @@ docker compose down -v
 
 | Variable | Description | Default |
 |---|---|---|
-| `VITE_API_BASE_URL` | Base URL for backend API calls | `https://nutriscan.viel-erfolg.ch/api` |
+| `VITE_API_BASE_URL` | Base URL for backend API calls | `https://nutriscan-api.frnc.dev/api` |
 | `VITE_OPEN_FOOD_FACTS_URL` | Open Food Facts API base URL | `https://world.openfoodfacts.org` |
 | `VITE_ENABLE_AUTH` | Enable authentication features | `true` |
 | `VITE_ENABLE_SYNC` | Enable sync features | `true` |
